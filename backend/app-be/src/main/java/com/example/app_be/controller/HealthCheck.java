@@ -1,4 +1,4 @@
-package com.example.app_be.controller.dto;
+package com.example.app_be.controller;
 
 import com.example.app_be.core.annotation.ApiV1;
 import org.springframework.http.ResponseEntity;
