@@ -1,0 +1,578 @@
+openapi: 3.0.3
+info:
+  title: App BE API
+  version: 1.0.0
+  description: |
+    OpenAPI specification generated from the current Spring Boot controllers.
+    Base API prefix is /api/v1.
+servers:
+  - url: http://localhost:3333/api/v1
+    description: Local development
+tags:
+  - name: Health
+  - name: Auth
+  - name: Users
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: UP
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login with email and password
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseLoginResponse'
+        '400':
+          $ref: '#/components/responses/ValidationFailedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /auth/reset-password/{id}:
+    post:
+      tags:
+        - Auth
+      summary: Reset a user's password to the default password
+      description: Requires authenticated user with role MANAGER.
+      operationId: resetPassword
+      parameters:
+        - $ref: '#/components/parameters/UserIdPathParam'
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseVoid'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /auth/change-password:
+    post:
+      tags:
+        - Auth
+      summary: Change password of current user
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseVoid'
+        '400':
+          description: Validation failed or password rule violated
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ApiValidationErrorResponse'
+                  - $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /users:
+    post:
+      tags:
+        - Users
+      summary: Create a new user
+      description: Requires authenticated user with role MANAGER.
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '200':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseUserResponseDto'
+        '400':
+          description: Validation failed or business rule violation
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ApiValidationErrorResponse'
+                  - $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    get:
+      tags:
+        - Users
+      summary: Search users (exclude current user)
+      description: Requires authenticated user with role MANAGER.
+      operationId: searchUsers
+      parameters:
+        - name: query
+          in: query
+          required: false
+          description: Full name or email keyword.
+          schema:
+            type: string
+            default: ''
+      responses:
+        '200':
+          description: Search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseUserListResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get current user profile
+      operationId: getMe
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseUserResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by id
+      operationId: getUserById
+      parameters:
+        - $ref: '#/components/parameters/UserIdPathParam'
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseUserResponseDto'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    post:
+      tags:
+        - Users
+      summary: Update user by id
+      description: Uses POST in the current implementation (not PUT/PATCH).
+      operationId: updateUser
+      parameters:
+        - $ref: '#/components/parameters/UserIdPathParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseUserResponseDto'
+        '400':
+          $ref: '#/components/responses/ValidationFailedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete user by id
+      description: Requires MANAGER role or deleting own account. Cannot delete MANAGER account.
+      operationId: deleteUser
+      parameters:
+        - $ref: '#/components/parameters/UserIdPathParam'
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseVoid'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    UserIdPathParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: User id
+
+  responses:
+    ValidationFailedResponse:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiValidationErrorResponse'
+          example:
+            success: false
+            message: Validation failed
+            errors:
+              email: Email is not valid
+            timestamp: '2026-04-09T12:00:00Z'
+
+    UnauthorizedResponse:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            success: false
+            message: Invalid token!
+            errors: null
+            timestamp: '2026-04-09T12:00:00Z'
+
+    ForbiddenResponse:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            success: false
+            message: Access Denied
+            errors: null
+            timestamp: '2026-04-09T12:00:00Z'
+
+    NotFoundResponse:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            success: false
+            message: User not found!
+            errors: null
+            timestamp: '2026-04-09T12:00:00Z'
+
+    InternalServerErrorResponse:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+          example:
+            success: false
+            message: Internal server error
+            errors: null
+            timestamp: '2026-04-09T12:00:00Z'
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: UP
+      required:
+        - status
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          example: manager@example.com
+        password:
+          type: string
+          minLength: 6
+          example: '123456'
+      required:
+        - email
+        - password
+
+    CreateUserRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+          example: Nguyen Van A
+        email:
+          type: string
+          format: email
+          minLength: 1
+          example: staff@example.com
+        role:
+          type: string
+          description: Accepted values map to UserRole (case-insensitive in service).
+          enum:
+            - MANAGER
+            - STAFF
+          example: STAFF
+      required:
+        - fullName
+        - email
+        - role
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 1
+          example: Nguyen Van B
+        email:
+          type: string
+          format: email
+          minLength: 1
+          example: new-email@example.com
+      required:
+        - fullName
+        - email
+
+    ChangePasswordRequest:
+      type: object
+      properties:
+        oldPassword:
+          type: string
+          minLength: 6
+          example: '123456'
+        newPassword:
+          type: string
+          minLength: 6
+          example: 'newStrongPass123'
+      required:
+        - oldPassword
+        - newPassword
+
+    LoginResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+        role:
+          type: string
+          enum:
+            - MANAGER
+            - STAFF
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+          nullable: true
+      required:
+        - id
+        - fullName
+        - role
+        - accessToken
+
+    UserResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fullName:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum:
+            - MANAGER
+            - STAFF
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - fullName
+        - email
+        - role
+        - createdAt
+        - updatedAt
+
+    ApiResponseBase:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+          nullable: true
+        errors:
+          nullable: true
+          oneOf:
+            - type: object
+              additionalProperties: true
+            - type: array
+              items: {}
+            - type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - success
+        - timestamp
+
+    ApiResponseLoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/LoginResponse'
+
+    ApiResponseUserResponseDto:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/UserResponseDto'
+
+    ApiResponseUserListResponseDto:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/UserResponseDto'
+
+    ApiResponseVoid:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            data:
+              nullable: true
+              description: null on success
+
+    ApiErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            message:
+              type: string
+              example: Invalid token!
+
+    ApiValidationErrorResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponseBase'
+        - type: object
+          properties:
+            success:
+              type: boolean
+              example: false
+            message:
+              type: string
+              example: Validation failed
+            errors:
+              type: object
+              additionalProperties:
+                type: string
