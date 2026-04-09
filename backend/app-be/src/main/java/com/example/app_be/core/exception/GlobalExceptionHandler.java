@@ -3,6 +3,7 @@ package com.example.app_be.core.exception;
 import com.example.app_be.controller.dto.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -27,7 +28,13 @@ public class GlobalExceptionHandler {
         });
 
         return ApiResponse.error("Validation failed", errors);
+    }
 
+    // security exceptions
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResponse<Void> handleBadCredentialsException(BadCredentialsException e) {
+        return ApiResponse.error(e.getMessage(), null);
     }
 
     @ExceptionHandler(AppException.class)
