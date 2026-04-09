@@ -17,7 +17,7 @@ spring:
         #        format_sql: true
         default_batch_fetch_size: 100
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
   flyway:
     enabled: true
@@ -28,3 +28,7 @@ app:
     jwt:
       secret: ${JWT_SECRET:B1AFoI/GoJbfavxVh8G6G3GLZz/du9Oco2GGlhDGxQE=}
       expiration_seconds: ${JWT_EXPIRATION:3600}
+
+logging:
+  level:
+    flyway: DEBUG

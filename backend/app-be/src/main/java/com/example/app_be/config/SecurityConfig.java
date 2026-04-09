@@ -32,6 +32,7 @@ public class SecurityConfig {
                                         "/api/v1/auth/**",
                                         "/api/v1/health",
                                         "/error"
+                                        //,"/api/v1/users"
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 ).sessionManagement(session ->
