@@ -27,9 +27,7 @@ public class AuthServiceImpl implements AuthService {
                                 "Could not find user with email: \"%s\""
                                         .formatted(request.email())));
 
-        String encodedPassword = passwordEncoder.encode(request.password());
-        if (encodedPassword == null ||
-                !encodedPassword.equals(user.getPassword())) {
+        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new InvalidCredentialsException();
         }
 
