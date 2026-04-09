@@ -12,9 +12,9 @@ public record CreateUserRequest(
         @Email(message = "Email is not valid")
         String email,
 
-        @NotBlank(message = "Password is required")
-        @Size(min = 6, message = "Password must be at least 6 characters")
-        String password,
+//        @NotBlank(message = "Password is required")
+//        @Size(min = 6, message = "Password must be at least 6 characters")
+//        String password,
 
         @NotBlank(message = "Role is required")
         String role

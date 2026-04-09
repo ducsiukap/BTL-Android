@@ -33,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final ObjectMapper objectMapper;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final List<String> excludedPaths = List.of(
-            "/api/v1/auth/**",
+            "/api/v1/auth/login",
             "/api/v1/health",
             "/v3/api-docs/**",
             "/swagger-ui/**"
