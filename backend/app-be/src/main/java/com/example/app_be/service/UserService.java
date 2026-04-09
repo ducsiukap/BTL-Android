@@ -1,6 +1,7 @@
 package com.example.app_be.service;
 
 import com.example.app_be.controller.dto.request.CreateUserRequest;
+import com.example.app_be.controller.dto.request.UpdateUserRequest;
 import com.example.app_be.controller.dto.response.UserResponseDto;
 import com.example.app_be.model.User;
 
@@ -13,4 +14,8 @@ public interface UserService {
     public List<UserResponseDto> searchUsers(User currentUser, String query);
 
     public UserResponseDto getUserById(UUID id);
+
+    public UserResponseDto updateUser(UUID id, UpdateUserRequest request);
+
+    public void deleteUser(UUID id);
 }

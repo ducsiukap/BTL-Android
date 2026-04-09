@@ -1,6 +1,7 @@
 package com.example.app_be.service.impl.v1;
 
 import com.example.app_be.controller.dto.request.CreateUserRequest;
+import com.example.app_be.controller.dto.request.UpdateUserRequest;
 import com.example.app_be.controller.dto.response.ApiResponse;
 import com.example.app_be.controller.dto.response.UserResponseDto;
 import com.example.app_be.core.exception.DuplicateUserException;
@@ -13,9 +14,11 @@ import com.example.app_be.repository.UserRepository;
 import com.example.app_be.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.MethodNotAllowedException;
 
 import java.util.List;
 import java.util.UUID;
@@ -78,5 +81,40 @@ public class UserServiceImpl implements UserService {
 
         user = userRepository.save(user);
         return UserResponseDto.from(user);
+    }
+
+    @Override
+    @PreAuthorize("""
+            hasRole('MANAGER')
+                    or 
+                    (isAuthenticated() and authentication.principal.id == #id)
+            """)
+    public UserResponseDto updateUser(UUID id, UpdateUserRequest request) {
+        User user = userRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("User not found!")
+        );
+
+        user.setFullName(request.fullName());
+        user.setEmail(request.email());
+
+        user = userRepository.save(user);
+        return UserResponseDto.from(user);
+    }
+
+    @Override
+    @PreAuthorize("""
+                    hasRole('MANAGER')
+                    or 
+                    (isAuthenticated() and authentication.principal.id == #id)
+            """)
+    public void deleteUser(UUID id) {
+        User user = userRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("User not found!")
+        );
+
+        if (user.getRole() == UserRole.MANAGER)
+            throw new AuthorizationDeniedException("Cannot delete manager!");
+        
+        userRepository.delete(user);
     }
 }

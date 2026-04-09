@@ -1,6 +1,7 @@
 package com.example.app_be.controller;
 
 import com.example.app_be.controller.dto.request.CreateUserRequest;
+import com.example.app_be.controller.dto.request.UpdateUserRequest;
 import com.example.app_be.controller.dto.response.ApiResponse;
 import com.example.app_be.controller.dto.response.UserResponseDto;
 import com.example.app_be.core.annotation.ApiV1;
@@ -62,9 +63,18 @@ public class UserController {
     @PostMapping("/{id}")
     ResponseEntity<ApiResponse<UserResponseDto>> updateUser(
             @PathVariable UUID id,
-            @Valid @RequestBody CreateUserRequest request
+            @Valid @RequestBody UpdateUserRequest request
     ) {
-        return null;
+        UserResponseDto user = userService.updateUser(id, request);
+        return ResponseEntity.ok(ApiResponse.success(user));
+    }
+
+    @DeleteMapping("/{id}")
+    ResponseEntity<ApiResponse<Void>> deleteUser(
+            @PathVariable UUID id
+    ) {
+        userService.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
 }
