@@ -1,3 +1,95 @@
 <resources>
+<<<<<<< Updated upstream
     <string name="app_name">DDHT</string>
+=======
+    <string name="app_name">Cửa Hàng Tại Chỗ</string>
+    <string name="splash_loading">Đang kiểm tra phiên đăng nhập...</string>
+
+    <string name="login_title">Đăng nhập hệ thống</string>
+    <string name="login_subtitle">Dành cho nhân viên và quản lý</string>
+    <string name="login_tagline">Quản lý cửa hàng nhanh chóng, an toàn</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Mật khẩu</string>
+    <string name="login_button">Đăng nhập</string>
+    <string name="logout_button">Đăng xuất</string>
+    <string name="login_required_fields">Vui lòng nhập email và mật khẩu</string>
+    <string name="login_failed">Đăng nhập thất bại. Vui lòng kiểm tra thông tin.</string>
+    <string name="network_error">Lỗi mạng: %1$s</string>
+    <string name="session_expired">Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.</string>
+    <string name="error_invalid_email">Email chưa đúng định dạng.</string>
+    <string name="error_invalid_password">Mật khẩu phải có ít nhất 6 ký tự.</string>
+    <string name="error_required_email">Vui lòng nhập email.</string>
+    <string name="error_required_password">Vui lòng nhập mật khẩu.</string>
+    <string name="error_login_general">Không thể đăng nhập. Vui lòng thử lại.</string>
+
+    <string name="home_guest_welcome">Khách hàng: Chào mừng bạn đến trang sản phẩm</string>
+    <string name="home_staff_welcome">Xin chào %1$s (Nhân viên)</string>
+    <string name="open_cart">Giỏ hàng</string>
+    <string name="create_order">Tạo đơn hàng</string>
+    <string name="todo_open_cart">Chờ tính năng giỏ hàng</string>
+    <string name="todo_create_order">Chờ tính năng tạo đơn hàng</string>
+    <string name="nav_products">Sản phẩm</string>
+    <string name="nav_account">Tài khoản</string>
+    <string name="nav_users">Người dùng</string>
+    <string name="account_guest_title">Bạn chưa đăng nhập</string>
+    <string name="account_guest_desc">Đăng nhập để vào khu vực tài khoản và thao tác quản lý.</string>
+    <string name="account_staff_title">Tài khoản nhân viên</string>
+    <string name="account_staff_desc">Bạn đã đăng nhập. Trang quản lý tài khoản đang ở dạng mô phỏng.</string>
+    <string name="manage_account_button">Quản lý tài khoản</string>
+    <string name="account_fake_message">Đây là trang quản lý tài khoản giả lập.</string>
+
+    <string name="manager_greeting">Xin chào %1$s</string>
+    <string name="manager_hint">Trang quản lý sản phẩm (phase auth đã xong)</string>
+    <string name="manager_account_title">Quản lý tài khoản</string>
+    <string name="manager_account_hint">Khu vực quản lý tài khoản (đang mô phỏng cho phase hiện tại).</string>
+    <string name="manager_manage_account">Mở quản lý tài khoản</string>
+    <string name="manager_users_title">Quản lý người dùng</string>
+    <string name="manager_users_search_hint">Tìm theo tên hoặc email</string>
+    <string name="manager_users_add">Thêm người dùng</string>
+    <string name="manager_users_edit">Sửa người dùng</string>
+    <string name="manager_users_delete">Xóa người dùng</string>
+    <string name="manager_users_reset_password">Đặt lại mật khẩu</string>
+    <string name="manager_users_role">Vai trò: %1$s</string>
+    <string name="manager_users_confirm_delete">Bạn chắc chắn muốn xóa %1$s?</string>
+    <string name="manager_users_confirm_reset_password">Bạn chắc chắn muốn đặt lại mật khẩu cho %1$s?</string>
+    <string name="manager_users_load_failed">Không tải được danh sách người dùng</string>
+    <string name="manager_users_create_success">Tạo người dùng thành công</string>
+    <string name="manager_users_create_failed">Tạo người dùng thất bại</string>
+    <string name="manager_users_update_success">Cập nhật người dùng thành công</string>
+    <string name="manager_users_update_failed">Cập nhật người dùng thất bại</string>
+    <string name="manager_users_reset_password_success">Đặt lại mật khẩu thành công</string>
+    <string name="manager_users_reset_password_failed">Đặt lại mật khẩu thất bại</string>
+    <string name="manager_users_delete_success">Xóa người dùng thành công</string>
+    <string name="manager_users_delete_failed">Xóa người dùng thất bại</string>
+
+    <string name="profile_info_title">Thông tin cá nhân</string>
+    <string name="profile_fullname">Họ tên</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_load_failed">Không thể tải thông tin cá nhân</string>
+    <string name="profile_edit_button">Thay đổi thông tin</string>
+    <string name="profile_edit_title">Cập nhật thông tin cá nhân</string>
+    <string name="profile_change_password_title">Thay đổi mật khẩu</string>
+    <string name="profile_save_changes">Cập nhật</string>
+    <string name="profile_old_password">Mật khẩu cũ</string>
+    <string name="profile_new_password">Mật khẩu mới</string>
+    <string name="profile_confirm_password">Xác nhận mật khẩu</string>
+    <string name="profile_change_password_button">Thay đổi mật khẩu</string>
+    <string name="profile_do_change_password">Thay đổi</string>
+    <string name="profile_update_success">Cập nhật thông tin thành công</string>
+    <string name="profile_update_failed">Cập nhật thông tin thất bại</string>
+    <string name="password_change_success">Đổi mật khẩu thành công</string>
+    <string name="password_change_failed">Đổi mật khẩu thất bại</string>
+    <string name="error_password_min_length">Mật khẩu phải có ít nhất 6 ký tự</string>
+    <string name="error_password_mismatch">Mật khẩu không khớp</string>
+    <string name="error_required_field">Vui lòng nhập %1$s</string>
+    <string name="common_back">Quay lại</string>
+    <string name="common_search">Tìm</string>
+    <string name="common_edit">Sửa</string>
+    <string name="common_reset_password">Reset mật khẩu</string>
+    <string name="common_delete">Xóa</string>
+    <string name="common_cancel">Hủy</string>
+    <string name="common_save">Lưu</string>
+
+    <string name="login_error_placeholder"> </string>
+>>>>>>> Stashed changes
 </resources>

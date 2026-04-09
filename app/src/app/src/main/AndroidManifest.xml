@@ -12,7 +12,26 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.DDHT">
         <activity
+<<<<<<< Updated upstream
             android:name=".MainActivity"
+=======
+            android:name=".ui.common.profile.ChangePasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.common.profile.EditProfileActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.manager.ManagerActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.common.HomeActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.common.SplashActivity"
+>>>>>>> Stashed changes
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
