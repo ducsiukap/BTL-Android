@@ -5,17 +5,25 @@ import android.content.SharedPreferences;
 
 public class SessionManager {
     private final SharedPreferences sharedPreferences;
+    private static final String KEY_USER_ID = Constants.KEY_USER_ID;
 
     public SessionManager(Context context) {
         this.sharedPreferences = context.getSharedPreferences(Constants.PREFS_NAME, Context.MODE_PRIVATE);
     }
 
     public void saveSession(String accessToken, String role, String fullName) {
-        sharedPreferences.edit()
+        saveSession(accessToken, role, fullName, null);
+    }
+
+    public void saveSession(String accessToken, String role, String fullName, String userId) {
+        SharedPreferences.Editor editor = sharedPreferences.edit()
                 .putString(Constants.KEY_ACCESS_TOKEN, accessToken)
                 .putString(Constants.KEY_USER_ROLE, role)
-                .putString(Constants.KEY_USER_NAME, fullName)
-                .apply();
+                .putString(Constants.KEY_USER_NAME, fullName);
+        if (userId != null) {
+            editor.putString(KEY_USER_ID, userId);
+        }
+        editor.apply();
     }
 
     public String getAccessToken() {
@@ -28,6 +36,14 @@ public class SessionManager {
 
     public String getUserName() {
         return sharedPreferences.getString(Constants.KEY_USER_NAME, null);
+    }
+
+    public String getUserId() {
+        return sharedPreferences.getString(KEY_USER_ID, null);
+    }
+
+    public void saveName(String fullName) {
+        sharedPreferences.edit().putString(Constants.KEY_USER_NAME, fullName).apply();
     }
 
     public boolean isLoggedIn() {

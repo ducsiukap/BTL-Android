@@ -99,16 +99,13 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 LoginResponseData data = response.body().getData();
-                sessionManager.saveSession(data.getAccessToken(), data.getRole(), data.getFullName());
+                sessionManager.saveSession(data.getAccessToken(), data.getRole(), data.getFullName(), data.getId());
 
                 UserRole role = UserRole.fromString(data.getRole());
                 if (role == UserRole.MANAGER) {
                     startActivity(new Intent(LoginActivity.this, ManagerActivity.class));
                 } else {
-                    Intent staffIntent = new Intent(LoginActivity.this, HomeActivity.class);
-                    staffIntent.putExtra(HomeActivity.EXTRA_IS_LOGGED_IN, true);
-                    staffIntent.putExtra(HomeActivity.EXTRA_USER_NAME, data.getFullName());
-                    startActivity(staffIntent);
+                    startActivity(new Intent(LoginActivity.this, HomeActivity.class));
                 }
                 finish();
             }
