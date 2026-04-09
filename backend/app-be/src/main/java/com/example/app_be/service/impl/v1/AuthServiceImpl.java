@@ -1,23 +1,43 @@
 package com.example.app_be.service.impl.v1;
 
+import com.example.app_be.controller.dto.request.ChangePasswordRequest;
 import com.example.app_be.controller.dto.request.LoginRequest;
 import com.example.app_be.controller.dto.response.LoginResponse;
 import com.example.app_be.core.exception.InvalidCredentialsException;
+import com.example.app_be.core.exception.ChangePasswordException;
+import com.example.app_be.core.exception.ResourceNotFoundException;
 import com.example.app_be.core.security.JwtService;
 import com.example.app_be.model.User;
 import com.example.app_be.repository.UserRepository;
 import com.example.app_be.service.AuthService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final String defaultPassword;
+
+    public AuthServiceImpl(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            @Value("${app.security.default_password:12345678}")
+            String defaultPassword
+    ) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
+        this.defaultPassword = defaultPassword;
+    }
 
     @Override
     public LoginResponse login(LoginRequest request) {
@@ -38,5 +58,28 @@ public class AuthServiceImpl implements AuthService {
                 user.getRole().name(),
                 accessToken, null
         );
+    }
+
+    @Override
+    @PreAuthorize("hasRole('MANAGER')")
+    public void resetPassword(UUID id) {
+        User user = userRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("User not found!")
+        );
+
+        user.setPassword(passwordEncoder.encode(defaultPassword));
+        userRepository.save(user);
+    }
+
+    @Override
+    public void changePassword(User currentUser, ChangePasswordRequest request) {
+        if (request.oldPassword().equals(request.newPassword()))
+            throw new ChangePasswordException("New password cannot be the same as old password!");
+
+        if (!passwordEncoder.matches(request.oldPassword(), currentUser.getPassword()))
+            throw new ChangePasswordException("Old password does not match!");
+
+        currentUser.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(currentUser);
     }
 }
