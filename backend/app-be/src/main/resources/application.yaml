@@ -1,3 +1,30 @@
+server:
+  port: 3333
+
 spring:
   application:
     name: app-be
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/${DB_NAME:android_db}?useSSL=false
+    username: ${DB_USER:root}
+    password: "${DB_PASSWORD:vduczz#13304}"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    #    show-sql: true
+    properties:
+      hibernate:
+        #        format_sql: true
+        default_batch_fetch_size: 100
+    hibernate:
+      ddl-auto: update
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:secret}
+      expiration: ${JWT_EXPIRATION:3600}
