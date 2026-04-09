@@ -13,6 +13,7 @@ import com.example.app_be.model.UserRole;
 import com.example.app_be.repository.UserRepository;
 import com.example.app_be.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,11 +25,22 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final String defaultPassword;
+
+    public UserServiceImpl(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            @Value("${app.security.default_password:12345678}")
+            String defaultPassword) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.defaultPassword = defaultPassword;
+    }
 
     @Override
     @PreAuthorize("hasRole('MANAGER')")
@@ -68,7 +80,7 @@ public class UserServiceImpl implements UserService {
             throw new InvalidRoleException(String.format("Invalid role: %s", request.role()));
         }
 
-        String encodedPassword = passwordEncoder.encode(request.password());
+        String encodedPassword = passwordEncoder.encode(defaultPassword);
         if (encodedPassword == null)
             throw new EncodeException();
 
@@ -114,7 +126,7 @@ public class UserServiceImpl implements UserService {
 
         if (user.getRole() == UserRole.MANAGER)
             throw new AuthorizationDeniedException("Cannot delete manager!");
-        
+
         userRepository.delete(user);
     }
 }
