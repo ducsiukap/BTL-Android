@@ -28,6 +28,7 @@ app:
     jwt:
       secret: ${JWT_SECRET:B1AFoI/GoJbfavxVh8G6G3GLZz/du9Oco2GGlhDGxQE=}
       expiration_seconds: ${JWT_EXPIRATION:28800}
+    default_password: ${DEFAULT_PASSWORD:12345678}
 
 logging:
   level:
