@@ -6,6 +6,7 @@ import com.example.app_be.controller.dto.response.UserResponseDto;
 import com.example.app_be.core.exception.DuplicateUserException;
 import com.example.app_be.core.exception.EncodeException;
 import com.example.app_be.core.exception.InvalidRoleException;
+import com.example.app_be.core.exception.ResourceNotFoundException;
 import com.example.app_be.model.User;
 import com.example.app_be.model.UserRole;
 import com.example.app_be.repository.UserRepository;
@@ -16,12 +17,35 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Override
+    @PreAuthorize("hasRole('MANAGER')")
+    public List<UserResponseDto> searchUsers(
+            User currentUser, String query
+    ) {
+        List<User> users;
+        if (query == null || query.isBlank())
+            users = userRepository.findAllByEmailNotIgnoreCase(currentUser.getEmail());
+        else users = userRepository.searchUserExcludeCurrentUser(currentUser.getEmail(), query);
+        return users.stream().map(UserResponseDto::from).toList();
+    }
+
+    @Override
+    public UserResponseDto getUserById(UUID id) {
+        User user = userRepository.findById(id).orElseThrow(
+                () -> new ResourceNotFoundException("User not found!")
+        );
+        return UserResponseDto.from(user);
+    }
 
     @Override
     @PreAuthorize("hasRole('MANAGER')")
