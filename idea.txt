@@ -1,0 +1,30 @@
+--------------------------------------------
+Chuc nang
++ Auth + User (chi can tai khoan admin)
++ Quan ly catalog, san pham, giam gia san pham, ...  
+
++ Quan ly cart + order + thanh toan
+	// - Phía mua: không cần đăng nhập vẫn có thể them hang vào cart, tao order + thanh toan
+	// - Phía bán: được thông báo đơn hàng đã được thanh toán, xác nhận hoàn thành, ... 
+
++ AI:
+	// chat về item
+	// thêm item vào giỏ
+
++ Thong ke ?
+
+// 
++ Tao don hang + gio hang + thanh toan: khong can dang nhap
+	+ Madon 123
++ NVCH: được thông báo đơn hàng đã được thanh toán, xác nhận hoàn thành, ... 
++ QL: 
+	+ User (chi can tai khoan admin)
+	+ Quan ly catalog, san pham, giam gia san pham, ... 
+
+User(id, ten, username, password, ROLE)
+Catalog(id, name)
+Item(id, name, desc, price, is_selling), SaleOff(id, start_date, end_date, amount)
+ItemImage(id, url, item_id)
+
+Order(id, created_at, payment_time, user_id, status, code)
+OrderItem(id, item_id, amount, price)
