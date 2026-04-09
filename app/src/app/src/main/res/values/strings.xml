@@ -1,3 +1,44 @@
 <resources>
-    <string name="app_name">DDHT</string>
+    <string name="app_name">Cửa Hàng Tại Chỗ</string>
+    <string name="splash_loading">Đang kiểm tra phiên đăng nhập...</string>
+
+    <string name="login_title">Đăng nhập hệ thống</string>
+    <string name="login_subtitle">Dành cho nhân viên và quản lý</string>
+    <string name="login_tagline">Quản lý cửa hàng nhanh chóng, an toàn</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Mật khẩu</string>
+    <string name="login_button">Đăng nhập</string>
+    <string name="logout_button">Đăng xuất</string>
+    <string name="login_required_fields">Vui lòng nhập email và mật khẩu</string>
+    <string name="login_failed">Đăng nhập thất bại. Vui lòng kiểm tra thông tin.</string>
+    <string name="network_error">Lỗi mạng: %1$s</string>
+    <string name="session_expired">Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.</string>
+    <string name="error_invalid_email">Email chưa đúng định dạng.</string>
+    <string name="error_invalid_password">Mật khẩu phải có ít nhất 6 ký tự.</string>
+    <string name="error_required_email">Vui lòng nhập email.</string>
+    <string name="error_required_password">Vui lòng nhập mật khẩu.</string>
+    <string name="error_login_general">Không thể đăng nhập. Vui lòng thử lại.</string>
+
+    <string name="home_guest_welcome">Khách hàng: Chào mừng bạn đến trang sản phẩm</string>
+    <string name="home_staff_welcome">Xin chào %1$s (Nhân viên)</string>
+    <string name="open_cart">Giỏ hàng</string>
+    <string name="create_order">Tạo đơn hàng</string>
+    <string name="todo_open_cart">Chờ tính năng giỏ hàng</string>
+    <string name="todo_create_order">Chờ tính năng tạo đơn hàng</string>
+    <string name="nav_products">Sản phẩm</string>
+    <string name="nav_account">Tài khoản</string>
+    <string name="account_guest_title">Bạn chưa đăng nhập</string>
+    <string name="account_guest_desc">Đăng nhập để vào khu vực tài khoản và thao tác quản lý.</string>
+    <string name="account_staff_title">Tài khoản nhân viên</string>
+    <string name="account_staff_desc">Bạn đã đăng nhập. Trang quản lý tài khoản đang ở dạng mô phỏng.</string>
+    <string name="manage_account_button">Quản lý tài khoản</string>
+    <string name="account_fake_message">Đây là trang quản lý tài khoản giả lập.</string>
+
+    <string name="manager_greeting">Xin chào %1$s</string>
+    <string name="manager_hint">Trang quản lý sản phẩm (phase auth đã xong)</string>
+    <string name="manager_account_title">Quản lý tài khoản</string>
+    <string name="manager_account_hint">Khu vực quản lý tài khoản (đang mô phỏng cho phase hiện tại).</string>
+    <string name="manager_manage_account">Mở quản lý tài khoản</string>
+
+    <string name="login_error_placeholder"> </string>
 </resources>
