@@ -1,5 +1,6 @@
 package com.example.app_be.core.security;
 
+import com.example.app_be.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Service
@@ -42,10 +44,14 @@ public class JwtService {
             UserDetails userDetails,
             Map<String, Object> extraClaims
     ) {
+
+        User user = (User) userDetails;
+
         return Jwts.builder()
                 .claims(extraClaims)
-                .claim("role", userDetails.getAuthorities())
-                .subject(userDetails.getUsername())
+//                .claim("role", user.getAuthorities())
+                .claim("username", user.getUsername())
+                .subject(user.getId().toString())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + this.EXPIRATION_SECOND * 1000))
                 .signWith(this.getSigningKey())
@@ -71,8 +77,12 @@ public class JwtService {
         return claimResolver.apply(claims);
     }
 
+    UUID extractSubject(String token) {
+        return UUID.fromString(extractClaim(token, Claims::getSubject));
+    }
+
     String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return extractClaim(token, claims -> claims.get("username", String.class));
     }
 
     Date extractExpiration(String token) {
@@ -85,9 +95,8 @@ public class JwtService {
     }
 
     boolean isTokenValid(String token, UserDetails userDetails) {
+        User user = (User) userDetails;
         return (!isTokenExpired(token)) &&
-                (extractUsername(token)
-                        .equals(userDetails.getUsername()));
+                (extractSubject(token).equals(user.getId()));
     }
-
 }
