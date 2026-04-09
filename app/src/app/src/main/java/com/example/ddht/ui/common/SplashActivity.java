@@ -32,7 +32,7 @@ public class SplashActivity extends AppCompatActivity {
         authRepository = new AuthRepository();
 
         if (!sessionManager.isLoggedIn()) {
-            openHome(false, null);
+            openHome();
             return;
         }
 
@@ -43,17 +43,17 @@ public class SplashActivity extends AppCompatActivity {
                 if (!response.isSuccessful() || response.body() == null || response.body().getData() == null) {
                     sessionManager.clearSession();
                     Toast.makeText(SplashActivity.this, R.string.session_expired, Toast.LENGTH_SHORT).show();
-                    openHome(false, null);
+                    openHome();
                     return;
                 }
 
                 UserDto me = response.body().getData();
-                sessionManager.saveSession(token, me.getRole(), me.getFullName());
+                sessionManager.saveSession(token, me.getRole(), me.getFullName(), me.getId());
                 UserRole role = UserRole.fromString(me.getRole());
                 if (role == UserRole.MANAGER) {
                     startActivity(new Intent(SplashActivity.this, ManagerActivity.class));
                 } else {
-                    openHome(true, me.getFullName());
+                    openHome();
                 }
                 finish();
             }
@@ -61,18 +61,13 @@ public class SplashActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Call<ApiResponse<UserDto>> call, @NonNull Throwable throwable) {
                 sessionManager.clearSession();
-                openHome(false, null);
+                openHome();
             }
         });
     }
 
-    private void openHome(boolean loggedIn, String fullName) {
-        Intent intent = new Intent(this, HomeActivity.class);
-        intent.putExtra(HomeActivity.EXTRA_IS_LOGGED_IN, loggedIn);
-        if (fullName != null) {
-            intent.putExtra(HomeActivity.EXTRA_USER_NAME, fullName);
-        }
-        startActivity(intent);
+    private void openHome() {
+        startActivity(new Intent(this, HomeActivity.class));
         finish();
     }
 }

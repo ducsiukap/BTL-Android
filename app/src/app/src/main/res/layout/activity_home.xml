@@ -57,44 +57,12 @@
             </LinearLayout>
         </LinearLayout>
 
-        <LinearLayout
+        <FrameLayout
             android:id="@+id/layoutHomeAccount"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:padding="24dp"
             android:visibility="gone">
-
-            <TextView
-                android:id="@+id/tvAccountTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvAccountDescription"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center"
-                android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
-
-            <Button
-                android:id="@+id/btnAccountPrimary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp" />
-
-            <Button
-                android:id="@+id/btnAccountSecondary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/logout_button"
-                android:visibility="gone" />
-        </LinearLayout>
+        </FrameLayout>
     </FrameLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView

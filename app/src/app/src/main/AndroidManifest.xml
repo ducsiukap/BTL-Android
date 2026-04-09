@@ -15,6 +15,12 @@
         android:usesCleartextTraffic="true"
         android:theme="@style/Theme.DDHT">
         <activity
+            android:name=".ui.common.profile.ChangePasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.common.profile.EditProfileActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.auth.LoginActivity"
             android:exported="false" />
         <activity
@@ -32,9 +38,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
     </application>
 
 </manifest>

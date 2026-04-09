@@ -33,50 +33,25 @@
                 android:text="@string/manager_hint" />
         </LinearLayout>
 
-        <LinearLayout
+        <FrameLayout
+            android:id="@+id/layoutManagerUsers"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+
+        <FrameLayout
             android:id="@+id/layoutManagerAccount"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center_horizontal"
-            android:orientation="vertical"
-            android:padding="24dp"
             android:visibility="gone">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/manager_account_title"
-                android:textAppearance="@style/TextAppearance.Material3.HeadlineSmall"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center"
-                android:text="@string/manager_account_hint" />
-
-            <Button
-                android:id="@+id/btnManagerManageAccount"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/manager_manage_account" />
-
-            <Button
-                android:id="@+id/btnManagerLogout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/logout_button" />
-        </LinearLayout>
+        </FrameLayout>
     </FrameLayout>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationManager"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:menu="@menu/main_bottom_nav"
+        app:menu="@menu/main_bottom_nav_manager"
         app:labelVisibilityMode="labeled" />
 
 </LinearLayout>
