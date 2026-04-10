@@ -16,30 +16,45 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
         <EditText
             android:id="@+id/edtUserSearch"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:layout_weight="1"
             android:hint="@string/manager_users_search_hint"
+            android:imeOptions="actionSearch"
+            android:maxLines="1"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
             android:inputType="text" />
 
-        <Button
+        <ImageButton
             android:id="@+id/btnSearchUsers"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/common_search" />
-    </LinearLayout>
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/common_search"
+            android:padding="8dp"
+            android:scaleType="centerInside"
+            android:src="@android:drawable/ic_menu_search"
+            android:tint="#138981" />
 
-    <Button
-        android:id="@+id/btnAddUser"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="@string/manager_users_add" />
+        <ImageButton
+            android:id="@+id/btnAddUser"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_top_action_button"
+            android:contentDescription="@string/manager_users_add"
+            android:padding="12dp"
+            android:scaleType="centerInside"
+            android:src="@android:drawable/ic_input_add"
+            android:tint="@android:color/white" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tvManagerUsersError"

@@ -2,10 +2,10 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="10dp"
+    android:layout_marginBottom="12dp"
     android:background="@drawable/card_background"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:padding="12dp">
 
     <TextView
         android:id="@+id/tvUserName"
@@ -26,32 +26,46 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp" />
 
-    <Button
-        android:id="@+id/btnResetPasswordUser"
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="8dp"
-        android:text="@string/common_reset_password" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="10dp"
+        android:gravity="start"
         android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btnEditUser"
-            android:layout_width="0dp"
-            android:layout_height="44dp"
-            android:layout_weight="1"
-            android:text="@string/common_edit" />
+        <ImageButton
+            android:id="@+id/btnResetPasswordUser"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/bg_action_icon_button"
+            android:contentDescription="@string/common_reset_password"
+            android:padding="7dp"
+            android:scaleType="centerInside"
+            android:src="@android:drawable/ic_menu_rotate"
+            android:tint="#138981" />
 
-        <Button
-            android:id="@+id/btnDeleteUser"
-            android:layout_width="0dp"
-            android:layout_height="44dp"
+        <ImageButton
+            android:id="@+id/btnEditUser"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
             android:layout_marginStart="8dp"
-            android:layout_weight="1"
-            android:text="@string/common_delete" />
+            android:background="@drawable/bg_action_icon_button"
+            android:contentDescription="@string/common_edit"
+            android:padding="7dp"
+            android:scaleType="centerInside"
+            android:src="@android:drawable/ic_menu_edit"
+            android:tint="#138981" />
+
+        <ImageButton
+            android:id="@+id/btnDeleteUser"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_action_icon_button"
+            android:contentDescription="@string/common_delete"
+            android:padding="7dp"
+            android:scaleType="centerInside"
+            android:src="@android:drawable/ic_menu_delete"
+            android:tint="#138981" />
     </LinearLayout>
 </LinearLayout>

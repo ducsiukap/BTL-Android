@@ -3,6 +3,7 @@ package com.example.ddht.ui.common.profile;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -15,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.ddht.R;
 import com.example.ddht.data.remote.dto.ApiResponse;
 import com.example.ddht.data.repository.AuthRepository;
+import com.example.ddht.ui.common.KeyboardUtils;
 import com.example.ddht.utils.SessionManager;
 
 import retrofit2.Call;
@@ -49,9 +51,17 @@ public class ChangePasswordActivity extends AppCompatActivity {
 
         findViewById(R.id.btnChangePasswordBack).setOnClickListener(v -> finish());
         btnChangePassword.setOnClickListener(v -> doChangePassword());
+        edtConfirmPassword.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO) {
+                doChangePassword();
+                return true;
+            }
+            return false;
+        });
     }
 
     private void doChangePassword() {
+        KeyboardUtils.hideKeyboard(this);
         String oldPassword = edtOldPassword.getText().toString().trim();
         String newPassword = edtNewPassword.getText().toString().trim();
         String confirmPassword = edtConfirmPassword.getText().toString().trim();
