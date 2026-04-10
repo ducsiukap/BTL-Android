@@ -27,7 +27,7 @@ public class SaleOffController {
         return ResponseEntity.ok(ApiResponse.success(saleOffs));
     }
 
-    @PostMapping("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<SaleOffResponse>> updateSaleOff(
             @PathVariable Long id,
             @Valid @RequestBody CreateSaleOffRequest request

@@ -31,7 +31,7 @@ paths:
           $ref: '#/components/responses/InternalServerErrorResponse'
 
   /saleoffs/{id}:
-    post:
+    put:
       tags:
         - SaleOffs
       summary: Update sale off by id
