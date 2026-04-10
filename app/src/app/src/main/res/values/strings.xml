@@ -19,8 +19,13 @@
     <string name="error_required_password">Vui lòng nhập mật khẩu.</string>
     <string name="error_login_general">Không thể đăng nhập. Vui lòng thử lại.</string>
 
-    <string name="home_guest_welcome">Khách hàng: Chào mừng bạn đến trang sản phẩm</string>
+    <string name="home_guest_welcome">Hôm nay bạn thèm ăn gì?</string>
     <string name="home_staff_welcome">Xin chào %1$s (Nhân viên)</string>
+    <string name="home_product_search_hint">Tìm sản phẩm theo tên hoặc mô tả</string>
+    <string name="home_catalog_all">Tất cả</string>
+    <string name="home_products_empty">Không tìm thấy sản phẩm phù hợp</string>
+    <string name="home_products_load_failed">Không tải được danh sách sản phẩm</string>
+    <string name="home_sale_off_badge">Giảm giá</string>
     <string name="open_cart">Giỏ hàng</string>
     <string name="create_order">Tạo đơn hàng</string>
     <string name="todo_open_cart">Chờ tính năng giỏ hàng</string>

@@ -1,8 +1,11 @@
 package com.example.ddht.ui.common.adapter;
 
+import android.graphics.Paint;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -10,16 +13,26 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ddht.R;
 import com.example.ddht.data.model.Product;
+import com.bumptech.glide.Glide;
 
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductViewHolder> {
-    private final List<Product> products;
+    private final List<Product> products = new ArrayList<>();
 
     public ProductAdapter(List<Product> products) {
-        this.products = products;
+        submit(products);
+    }
+
+    public void submit(List<Product> items) {
+        products.clear();
+        if (items != null) {
+            products.addAll(items);
+        }
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -35,7 +48,27 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         holder.tvName.setText(product.getName());
         holder.tvSubtitle.setText(product.getSubtitle());
         NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-        holder.tvPrice.setText(formatter.format(product.getPrice()));
+        holder.tvPrice.setText(formatter.format(product.getDisplayPrice()));
+
+        if (product.isSaleOff() && product.getOriginalPrice() > product.getDisplayPrice()) {
+            holder.tvSaleOff.setVisibility(View.VISIBLE);
+            holder.tvOriginalPrice.setVisibility(View.VISIBLE);
+            holder.tvOriginalPrice.setText(formatter.format(product.getOriginalPrice()));
+            holder.tvOriginalPrice.setPaintFlags(holder.tvOriginalPrice.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            holder.tvPrice.setTextColor(holder.itemView.getContext().getColor(R.color.brand_error));
+            holder.tvPrice.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
+        } else {
+            holder.tvSaleOff.setVisibility(View.GONE);
+            holder.tvOriginalPrice.setVisibility(View.GONE);
+            holder.tvPrice.setTextColor(holder.itemView.getContext().getColor(R.color.brand_text_primary));
+            holder.tvPrice.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+        }
+
+        Glide.with(holder.itemView.getContext())
+                .load(product.getImageUrl())
+                .placeholder(R.drawable.product_image_placeholder)
+                .error(R.drawable.product_image_placeholder)
+                .into(holder.ivProductImage);
     }
 
     @Override
@@ -47,12 +80,18 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         TextView tvName;
         TextView tvSubtitle;
         TextView tvPrice;
+        TextView tvOriginalPrice;
+        TextView tvSaleOff;
+        ImageView ivProductImage;
 
         public ProductViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvProductName);
             tvSubtitle = itemView.findViewById(R.id.tvProductSubtitle);
             tvPrice = itemView.findViewById(R.id.tvProductPrice);
+            tvOriginalPrice = itemView.findViewById(R.id.tvProductOriginalPrice);
+            tvSaleOff = itemView.findViewById(R.id.tvProductSaleOff);
+            ivProductImage = itemView.findViewById(R.id.ivProductImage);
         }
     }
 }
