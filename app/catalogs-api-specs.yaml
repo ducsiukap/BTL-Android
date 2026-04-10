@@ -1,0 +1,351 @@
+openapi: 3.0.3
+info:
+  title: App BE Catalogs API
+  version: 1.0.0
+  description: |
+    OpenAPI specification for catalog management endpoints.
+    Base API prefix is /api/v1.
+servers:
+  - url: http://localhost:3333/api/v1
+    description: Local development
+tags:
+  - name: Catalogs
+  - name: Products
+security:
+  - bearerAuth: []
+paths:
+  /catalogs:
+    get:
+      tags:
+        - Catalogs
+      summary: Get all catalogs
+      operationId: getAllCatalogs
+      security: []
+      responses:
+        '200':
+          description: Catalog list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseCatalogList'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    post:
+      tags:
+        - Catalogs
+      summary: Create catalog
+      operationId: createCatalog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModifyCatalogRequest'
+      responses:
+        '200':
+          description: Catalog created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseCatalog'
+        '400':
+          $ref: '#/components/responses/ValidationFailedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /catalogs/{id}:
+    post:
+      tags:
+        - Catalogs
+      summary: Update catalog by id
+      operationId: updateCatalog
+      parameters:
+        - $ref: '#/components/parameters/CatalogIdPathParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModifyCatalogRequest'
+      responses:
+        '200':
+          description: Catalog updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseCatalog'
+        '400':
+          $ref: '#/components/responses/ValidationFailedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    delete:
+      tags:
+        - Catalogs
+      summary: Delete catalog by id
+      operationId: deleteCatalog
+      parameters:
+        - $ref: '#/components/parameters/CatalogIdPathParam'
+      responses:
+        '200':
+          description: Catalog deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseVoid'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /catalogs/{id}/products:
+    post:
+      tags:
+        - Catalogs
+        - Products
+      summary: Create product inside a catalog
+      operationId: addProductToCatalog
+      parameters:
+        - $ref: '#/components/parameters/CatalogIdPathParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateProductRequest'
+      responses:
+        '200':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduct'
+        '400':
+          $ref: '#/components/responses/ValidationFailedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    CatalogIdPathParam:
+      name: id
+      in: path
+      required: true
+      description: Catalog id.
+      schema:
+        type: integer
+        format: int64
+  responses:
+    UnauthorizedResponse:
+      description: Unauthorized
+    ForbiddenResponse:
+      description: Forbidden
+    NotFoundResponse:
+      description: Resource not found
+    ValidationFailedResponse:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    InternalServerErrorResponse:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+  schemas:
+    ApiErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          nullable: true
+      additionalProperties: false
+    ApiResponseVoid:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          nullable: true
+        data:
+          nullable: true
+        errors:
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ApiResponseCatalogList:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          nullable: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CatalogResponse'
+        errors:
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ApiResponseCatalog:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          nullable: true
+        data:
+          $ref: '#/components/schemas/CatalogResponse'
+        errors:
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ApiResponseProduct:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          nullable: true
+        data:
+          $ref: '#/components/schemas/ProductResponse'
+        errors:
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    CatalogResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      required:
+        - id
+        - name
+      additionalProperties: false
+    ProductImageResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        url:
+          type: string
+      required:
+        - id
+        - url
+      additionalProperties: false
+    ProductResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        isSelling:
+          type: boolean
+        originalPrice:
+          type: number
+        isSaleOff:
+          type: boolean
+        discountedPrice:
+          type: number
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductImageResponse'
+      required:
+        - id
+        - name
+        - description
+        - isSelling
+        - originalPrice
+        - isSaleOff
+        - discountedPrice
+        - images
+      additionalProperties: false
+    ModifyCatalogRequest:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+      additionalProperties: false
+    CreateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          default: ''
+        price:
+          type: number
+        isSelling:
+          type: boolean
+          default: true
+        images:
+          type: array
+          items:
+            type: string
+            format: binary
+      required:
+        - name
+        - price
+        - images
+      additionalProperties: false
