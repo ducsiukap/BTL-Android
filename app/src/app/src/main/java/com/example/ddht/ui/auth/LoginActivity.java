@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.text.TextUtils;
+import android.view.inputmethod.EditorInfo;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,6 +19,7 @@ import com.example.ddht.data.model.UserRole;
 import com.example.ddht.data.remote.dto.ApiResponse;
 import com.example.ddht.data.remote.dto.LoginResponseData;
 import com.example.ddht.data.repository.AuthRepository;
+import com.example.ddht.ui.common.KeyboardUtils;
 import com.example.ddht.ui.common.HomeActivity;
 import com.example.ddht.ui.manager.ManagerActivity;
 import com.example.ddht.utils.SessionManager;
@@ -56,6 +58,13 @@ public class LoginActivity extends AppCompatActivity {
         sessionManager = new SessionManager(this);
 
         btnLogin.setOnClickListener(v -> attemptLogin());
+        edtPassword.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO) {
+                attemptLogin();
+                return true;
+            }
+            return false;
+        });
 
         edtEmail.setOnFocusChangeListener((v, hasFocus) -> {
             if (hasFocus) {
@@ -73,6 +82,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void attemptLogin() {
+        KeyboardUtils.hideKeyboard(this);
         hideGeneralError();
         String email = edtEmail.getText().toString().trim();
         String password = edtPassword.getText().toString().trim();

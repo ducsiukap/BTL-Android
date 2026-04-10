@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -17,6 +18,7 @@ import com.example.ddht.R;
 import com.example.ddht.data.remote.dto.ApiResponse;
 import com.example.ddht.data.remote.dto.UserDto;
 import com.example.ddht.data.repository.AuthRepository;
+import com.example.ddht.ui.common.KeyboardUtils;
 import com.example.ddht.utils.SessionManager;
 
 import retrofit2.Call;
@@ -49,6 +51,13 @@ public class EditProfileActivity extends AppCompatActivity {
 
         findViewById(R.id.btnEditProfileBack).setOnClickListener(v -> finish());
         btnSave.setOnClickListener(v -> updateProfile());
+        edtEmail.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO) {
+                updateProfile();
+                return true;
+            }
+            return false;
+        });
 
         loadCurrentProfile();
     }
@@ -83,6 +92,7 @@ public class EditProfileActivity extends AppCompatActivity {
     }
 
     private void updateProfile() {
+        KeyboardUtils.hideKeyboard(this);
         String fullName = edtFullName.getText().toString().trim();
         String email = edtEmail.getText().toString().trim();
 

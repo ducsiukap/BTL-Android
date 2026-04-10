@@ -3,7 +3,7 @@ package com.example.ddht.ui.manager.adapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -65,9 +65,9 @@ public class ManagerUserAdapter extends RecyclerView.Adapter<ManagerUserAdapter.
         TextView tvName;
         TextView tvEmail;
         TextView tvRole;
-        Button btnEdit;
-        Button btnResetPassword;
-        Button btnDelete;
+        ImageButton btnEdit;
+        ImageButton btnResetPassword;
+        ImageButton btnDelete;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);

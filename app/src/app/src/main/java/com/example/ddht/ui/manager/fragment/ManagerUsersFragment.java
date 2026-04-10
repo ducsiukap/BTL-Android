@@ -7,9 +7,10 @@ import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -25,6 +26,7 @@ import com.example.ddht.R;
 import com.example.ddht.data.remote.dto.ApiResponse;
 import com.example.ddht.data.remote.dto.UserDto;
 import com.example.ddht.data.repository.AuthRepository;
+import com.example.ddht.ui.common.KeyboardUtils;
 import com.example.ddht.ui.manager.adapter.ManagerUserAdapter;
 import com.example.ddht.utils.SessionManager;
 
@@ -57,8 +59,8 @@ public class ManagerUsersFragment extends Fragment {
         sessionManager = new SessionManager(requireContext());
 
         edtSearch = view.findViewById(R.id.edtUserSearch);
-        Button btnSearch = view.findViewById(R.id.btnSearchUsers);
-        Button btnAddUser = view.findViewById(R.id.btnAddUser);
+        ImageButton btnSearch = view.findViewById(R.id.btnSearchUsers);
+        ImageButton btnAddUser = view.findViewById(R.id.btnAddUser);
         tvError = view.findViewById(R.id.tvManagerUsersError);
         progressBar = view.findViewById(R.id.managerUsersProgress);
         RecyclerView rvUsers = view.findViewById(R.id.rvManagerUsers);
@@ -83,7 +85,20 @@ public class ManagerUsersFragment extends Fragment {
         rvUsers.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvUsers.setAdapter(adapter);
 
-        btnSearch.setOnClickListener(v -> loadUsers(edtSearch.getText().toString().trim()));
+        btnSearch.setOnClickListener(v -> {
+            KeyboardUtils.hideKeyboard(requireContext(), edtSearch);
+            edtSearch.clearFocus();
+            loadUsers(edtSearch.getText().toString().trim());
+        });
+        edtSearch.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
+                KeyboardUtils.hideKeyboard(requireContext(), edtSearch);
+                edtSearch.clearFocus();
+                loadUsers(edtSearch.getText().toString().trim());
+                return true;
+            }
+            return false;
+        });
         btnAddUser.setOnClickListener(v -> showUserFormDialog(null));
 
         loadUsers("");
@@ -148,6 +163,8 @@ public class ManagerUsersFragment extends Fragment {
                 .create();
 
         dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            KeyboardUtils.hideKeyboard(requireContext(), edtEmail);
+            edtEmail.clearFocus();
             String fullName = edtFullName.getText().toString().trim();
             String email = edtEmail.getText().toString().trim();
 

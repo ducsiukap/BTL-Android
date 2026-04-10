@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -38,7 +39,7 @@ public class ProfileFragment extends Fragment {
     private ProgressBar progressBar;
     private Button btnEditInfo;
     private Button btnChangePassword;
-    private Button btnLogout;
+    private ImageButton btnLogout;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
