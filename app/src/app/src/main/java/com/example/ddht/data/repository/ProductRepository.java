@@ -19,4 +19,8 @@ public class ProductRepository {
     public Call<ApiResponse<List<ProductDto>>> searchProducts(String query, Long catalogId, Integer page, Integer size) {
         return productApi.searchProducts(query, catalogId, page, size);
     }
+
+    public Call<ApiResponse<Void>> deleteSaleOffFromProduct(Long productId, Long saleOffId, String accessToken) {
+        return productApi.deleteSaleOffFromProduct(productId, saleOffId, "Bearer " + accessToken);
+    }
 }

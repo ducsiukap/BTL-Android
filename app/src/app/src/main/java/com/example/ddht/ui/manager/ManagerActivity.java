@@ -12,6 +12,7 @@ import com.example.ddht.R;
 import com.example.ddht.ui.common.fragment.AccountFragment;
 import com.example.ddht.ui.manager.fragment.CatalogFragment;
 import com.example.ddht.ui.manager.fragment.ManagerUsersFragment;
+import com.example.ddht.ui.manager.fragment.SaleOffFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.ddht.ui.common.SplashActivity;
 import com.example.ddht.utils.SessionManager;
@@ -49,6 +50,10 @@ public class ManagerActivity extends AppCompatActivity {
 
         getSupportFragmentManager().beginTransaction()
             .replace(R.id.layoutManagerCatalogTab, new CatalogFragment())
+            .commit();
+
+        getSupportFragmentManager().beginTransaction()
+            .replace(R.id.layoutManagerSaleOffTab, new SaleOffFragment())
             .commit();
 
         toggleManagerProductTabs.check(R.id.btnCatalogTab);
