@@ -32,7 +32,8 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/api/v1/auth/login",
                                         "/api/v1/health",
-                                        "/error"
+                                        "/error",
+                                        "/api/v1/users/no-auth"
                                         //,"/api/v1/users"
                                 ).permitAll()
                                 .requestMatchers(HttpMethod.GET,

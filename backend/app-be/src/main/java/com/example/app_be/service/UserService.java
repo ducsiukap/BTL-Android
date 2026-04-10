@@ -11,6 +11,8 @@ import java.util.UUID;
 public interface UserService {
     public UserResponseDto createUser(CreateUserRequest request);
 
+    public UserResponseDto createUserNoAuth(CreateUserRequest request);
+
     public List<UserResponseDto> searchUsers(User currentUser, String query);
 
     public UserResponseDto getUserById(UUID id);

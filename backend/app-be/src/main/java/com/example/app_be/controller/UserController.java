@@ -32,6 +32,14 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(user));
     }
 
+    @PostMapping("/no-auth")
+    ResponseEntity<ApiResponse<UserResponseDto>> createUserNoAuth(
+            @Valid @RequestBody CreateUserRequest request
+    ) {
+        UserResponseDto user = userService.createUserNoAuth(request);
+        return ResponseEntity.ok(ApiResponse.success(user));
+    }
+
     @GetMapping
     ResponseEntity<ApiResponse<List<UserResponseDto>>> searchUsers(
             @AuthenticationPrincipal User currentUser,
