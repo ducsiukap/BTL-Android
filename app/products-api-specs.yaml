@@ -1,0 +1,508 @@
+openapi: 3.0.3
+info:
+  title: App BE Products API
+  version: 1.0.0
+  description: |
+    OpenAPI specification for product management endpoints.
+    Base API prefix is /api/v1.
+servers:
+  - url: http://localhost:3333/api/v1
+    description: Local development
+tags:
+  - name: Products
+  - name: SaleOffs
+security:
+  - bearerAuth: []
+paths:
+  /products:
+    get:
+      tags:
+        - Products
+      summary: Search products
+      operationId: searchProducts
+      security: []
+      parameters:
+        - name: query
+          in: query
+          required: false
+          description: Search keyword for product name or description.
+          schema:
+            type: string
+            default: ''
+        - name: catalogId
+          in: query
+          required: false
+          description: Filter products by catalog id.
+          schema:
+            type: integer
+            format: int64
+        - name: page
+          in: query
+          required: false
+          description: Zero-based page index.
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          required: false
+          description: Page size.
+          schema:
+            type: integer
+            format: int32
+            default: 20
+      responses:
+        '200':
+          description: Search result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProductList'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /products/{id}:
+    get:
+      tags:
+        - Products
+      summary: Get product by id
+      operationId: getProductById
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/ProductIdPathParam'
+      responses:
+        '200':
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduct'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    post:
+      tags:
+        - Products
+      summary: Update product by id
+      operationId: updateProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductIdPathParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProductRequest'
+      responses:
+        '200':
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduct'
+        '400':
+          $ref: '#/components/responses/ValidationFailedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    delete:
+      tags:
+        - Products
+      summary: Delete product by id
+      operationId: deleteProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductIdPathParam'
+      responses:
+        '200':
+          description: Product deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseVoid'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /products/{id}/images:
+    post:
+      tags:
+        - Products
+      summary: Add images to a product
+      operationId: addImageToProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductIdPathParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AddImageRequest'
+      responses:
+        '200':
+          description: Product updated with new images
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduct'
+        '400':
+          $ref: '#/components/responses/ValidationFailedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /products/{productId}/images/{imageId}:
+    delete:
+      tags:
+        - Products
+      summary: Delete an image from a product
+      operationId: deleteImageFromProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductIdPathParam'
+        - $ref: '#/components/parameters/ImageIdPathParam'
+      responses:
+        '200':
+          description: Image deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseProduct'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /products/{id}/saleoffs:
+    post:
+      tags:
+        - SaleOffs
+        - Products
+      summary: Add sale off to a product
+      operationId: addSaleOffToProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductIdPathParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSaleOffRequest'
+      responses:
+        '200':
+          description: Sale off created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSaleOff'
+        '400':
+          $ref: '#/components/responses/ValidationFailedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /products/{productId}/saleoffs/{saleOffId}:
+    delete:
+      tags:
+        - SaleOffs
+        - Products
+      summary: Delete sale off from a product
+      operationId: deleteSaleOffFromProduct
+      parameters:
+        - $ref: '#/components/parameters/ProductIdPathParam'
+        - $ref: '#/components/parameters/SaleOffIdPathParam'
+      responses:
+        '200':
+          description: Sale off deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseVoid'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ProductIdPathParam:
+      name: id
+      in: path
+      required: true
+      description: Product id.
+      schema:
+        type: integer
+        format: int64
+    ImageIdPathParam:
+      name: imageId
+      in: path
+      required: true
+      description: Product image id.
+      schema:
+        type: integer
+        format: int64
+    SaleOffIdPathParam:
+      name: saleOffId
+      in: path
+      required: true
+      description: Sale off id.
+      schema:
+        type: integer
+        format: int64
+  responses:
+    UnauthorizedResponse:
+      description: Unauthorized
+    ForbiddenResponse:
+      description: Forbidden
+    NotFoundResponse:
+      description: Resource not found
+    ValidationFailedResponse:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    InternalServerErrorResponse:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+  schemas:
+    ApiErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          nullable: true
+      additionalProperties: false
+    ApiResponseVoid:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          nullable: true
+        data:
+          nullable: true
+        errors:
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ApiResponseProductList:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          nullable: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductResponse'
+        errors:
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ApiResponseProduct:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          nullable: true
+        data:
+          $ref: '#/components/schemas/ProductResponse'
+        errors:
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ApiResponseSaleOff:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          nullable: true
+        data:
+          $ref: '#/components/schemas/SaleOffResponse'
+        errors:
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ProductImageResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        url:
+          type: string
+      required:
+        - id
+        - url
+      additionalProperties: false
+    ProductResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        description:
+          type: string
+        isSelling:
+          type: boolean
+        originalPrice:
+          type: number
+        isSaleOff:
+          type: boolean
+        discountedPrice:
+          type: number
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductImageResponse'
+      required:
+        - id
+        - name
+        - description
+        - isSelling
+        - originalPrice
+        - isSaleOff
+        - discountedPrice
+        - images
+      additionalProperties: false
+    SaleOffResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        discount:
+          type: number
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        isActive:
+          type: boolean
+        productId:
+          type: integer
+          format: int64
+        productName:
+          type: string
+      required:
+        - id
+        - discount
+        - startDate
+        - isActive
+        - productId
+        - productName
+      additionalProperties: false
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: number
+        isSelling:
+          type: boolean
+          nullable: true
+      required:
+        - name
+        - price
+      additionalProperties: false
+    AddImageRequest:
+      type: object
+      properties:
+        images:
+          type: array
+          items:
+            type: string
+            format: binary
+      required:
+        - images
+      additionalProperties: false
+    CreateSaleOffRequest:
+      type: object
+      properties:
+        discount:
+          type: number
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        isActive:
+          type: boolean
+          default: false
+      required:
+        - discount
+        - startDate
+      additionalProperties: false

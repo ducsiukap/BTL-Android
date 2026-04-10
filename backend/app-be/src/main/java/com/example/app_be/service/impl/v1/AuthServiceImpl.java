@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -39,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
         this.defaultPassword = defaultPassword;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
@@ -60,6 +62,7 @@ public class AuthServiceImpl implements AuthService {
         );
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     @PreAuthorize("hasRole('MANAGER')")
     public void resetPassword(UUID id) {
@@ -71,6 +74,7 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void changePassword(User currentUser, ChangePasswordRequest request) {
         if (request.oldPassword().equals(request.newPassword()))

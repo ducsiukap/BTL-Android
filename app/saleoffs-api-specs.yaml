@@ -1,0 +1,195 @@
+openapi: 3.0.3
+info:
+  title: App BE SaleOffs API
+  version: 1.0.0
+  description: |
+    OpenAPI specification for sale off management endpoints.
+    Base API prefix is /api/v1.
+servers:
+  - url: http://localhost:3333/api/v1
+    description: Local development
+tags:
+  - name: SaleOffs
+security:
+  - bearerAuth: []
+paths:
+  /saleoffs:
+    get:
+      tags:
+        - SaleOffs
+      summary: Get all active sale offs
+      operationId: getAllSaleOffs
+      security: []
+      responses:
+        '200':
+          description: Sale off list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSaleOffList'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /saleoffs/{id}:
+    post:
+      tags:
+        - SaleOffs
+      summary: Update sale off by id
+      operationId: updateSaleOff
+      parameters:
+        - $ref: '#/components/parameters/SaleOffIdPathParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSaleOffRequest'
+      responses:
+        '200':
+          description: Sale off updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSaleOff'
+        '400':
+          $ref: '#/components/responses/ValidationFailedResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    SaleOffIdPathParam:
+      name: id
+      in: path
+      required: true
+      description: Sale off id.
+      schema:
+        type: integer
+        format: int64
+  responses:
+    UnauthorizedResponse:
+      description: Unauthorized
+    ForbiddenResponse:
+      description: Forbidden
+    NotFoundResponse:
+      description: Resource not found
+    ValidationFailedResponse:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    InternalServerErrorResponse:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+  schemas:
+    ApiErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          nullable: true
+      additionalProperties: false
+    ApiResponseSaleOffList:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          nullable: true
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleOffResponse'
+        errors:
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    ApiResponseSaleOff:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          nullable: true
+        data:
+          $ref: '#/components/schemas/SaleOffResponse'
+        errors:
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+      additionalProperties: false
+    SaleOffResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        discount:
+          type: number
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        isActive:
+          type: boolean
+        productId:
+          type: integer
+          format: int64
+        productName:
+          type: string
+      required:
+        - id
+        - discount
+        - startDate
+        - isActive
+        - productId
+        - productName
+      additionalProperties: false
+    CreateSaleOffRequest:
+      type: object
+      properties:
+        discount:
+          type: number
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+        isActive:
+          type: boolean
+          default: false
+      required:
+        - discount
+        - startDate
+      additionalProperties: false
