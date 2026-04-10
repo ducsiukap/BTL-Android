@@ -5,6 +5,11 @@ spring:
   application:
     name: app-be
 
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 200MB
+
   datasource:
     url: jdbc:mysql://localhost:3306/${DB_NAME:android_db}?useSSL=false
     username: ${DB_USER:root}
@@ -33,3 +38,8 @@ app:
 logging:
   level:
     flyway: DEBUG
+
+cloudinary:
+  cloud_name: ${CLOUDINARY_CLOUD_NAME:dsy6qo8ag}
+  api_key: ${CLOUDINARY_API_KEY:159817786689414}
+  api_secret: ${CLOUDINARY_API_SECRET:CtYu6RwalX2vAaL-SIyFRcTxh1o}

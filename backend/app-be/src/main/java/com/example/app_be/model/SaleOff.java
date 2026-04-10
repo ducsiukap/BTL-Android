@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -23,11 +24,12 @@ import java.util.Date;
 @Getter
 @Setter
 @NoArgsConstructor
+@SuperBuilder
 public class SaleOff extends LongIdBaseEntity {
     @Column(name = "start_date", nullable = false)
     private Instant startDate;
 
-    @Column(name = "end_date", nullable = false)
+    @Column(name = "end_date")
     private Instant endDate;
 
     @Column(name = "discount", nullable = false)

@@ -2,6 +2,7 @@ package com.example.app_be.model;
 
 import com.example.app_be.model.base.LongIdBaseEntity;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -46,9 +47,11 @@ public class Product extends LongIdBaseEntity {
             cascade = {CascadeType.ALL},
             orphanRemoval = true
     )
+    @Builder.Default
     private List<SaleOff> saleOffs = new ArrayList<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ProductImage> images = new ArrayList<>();
 
 

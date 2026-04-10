@@ -19,11 +19,13 @@ import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.MethodNotAllowedException;
 
 import java.util.List;
 import java.util.UUID;
 
+@Transactional(readOnly = true)
 @Service
 //@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -62,6 +64,7 @@ public class UserServiceImpl implements UserService {
         return UserResponseDto.from(user);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     @PreAuthorize("hasRole('MANAGER')")
     public UserResponseDto createUser(
@@ -95,6 +98,7 @@ public class UserServiceImpl implements UserService {
         return UserResponseDto.from(user);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     @PreAuthorize("""
             hasRole('MANAGER')
@@ -113,6 +117,7 @@ public class UserServiceImpl implements UserService {
         return UserResponseDto.from(user);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     @PreAuthorize("""
                     hasRole('MANAGER')

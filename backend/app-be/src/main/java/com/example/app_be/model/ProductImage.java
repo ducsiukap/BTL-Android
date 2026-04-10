@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "product_image",
+@Table(name = "product_images",
         indexes = {
                 @Index(name = "idx_product_image_product", columnList = "product_id")
         },
@@ -21,7 +21,12 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @SuperBuilder
 public class ProductImage extends LongIdBaseEntity {
+
+    @Column(nullable = false)
     private String url;
+
+    @Column(name = "public_id", nullable = false)
+    private String publicId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)

@@ -2,10 +2,7 @@ package com.example.app_be.model;
 
 import com.example.app_be.model.base.LongIdBaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
@@ -26,6 +23,7 @@ public class Catalog extends LongIdBaseEntity {
             cascade = {CascadeType.PERSIST, CascadeType.MERGE},
             orphanRemoval = false
     )
+    @Builder.Default
     private List<Product> products = new ArrayList<>();
 
     public void addProduct(Product product) {
