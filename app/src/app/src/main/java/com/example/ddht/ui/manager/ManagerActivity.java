@@ -3,14 +3,14 @@ package com.example.ddht.ui.manager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
 
 import com.example.ddht.R;
 import com.example.ddht.ui.common.fragment.AccountFragment;
+import com.example.ddht.ui.manager.fragment.CatalogFragment;
 import com.example.ddht.ui.manager.fragment.ManagerUsersFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.ddht.ui.common.SplashActivity;
@@ -26,6 +26,10 @@ public class ManagerActivity extends AppCompatActivity {
         View layoutManagerProducts = findViewById(R.id.layoutManagerProducts);
         View layoutManagerUsers = findViewById(R.id.layoutManagerUsers);
         View layoutManagerAccount = findViewById(R.id.layoutManagerAccount);
+        FrameLayout layoutManagerCatalogTab = findViewById(R.id.layoutManagerCatalogTab);
+        FrameLayout layoutManagerProductTab = findViewById(R.id.layoutManagerProductTab);
+        FrameLayout layoutManagerSaleOffTab = findViewById(R.id.layoutManagerSaleOffTab);
+        com.google.android.material.button.MaterialButtonToggleGroup toggleManagerProductTabs = findViewById(R.id.toggleManagerProductTabs);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationManager);
         TextView tvGreeting = findViewById(R.id.tvManagerGreeting);
 
@@ -42,6 +46,23 @@ public class ManagerActivity extends AppCompatActivity {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.layoutManagerAccount, new AccountFragment())
                 .commit();
+
+        getSupportFragmentManager().beginTransaction()
+            .replace(R.id.layoutManagerCatalogTab, new CatalogFragment())
+            .commit();
+
+        toggleManagerProductTabs.check(R.id.btnCatalogTab);
+        toggleManagerProductTabs.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) {
+                return;
+            }
+            layoutManagerCatalogTab.setVisibility(checkedId == R.id.btnCatalogTab ? View.VISIBLE : View.GONE);
+            layoutManagerProductTab.setVisibility(checkedId == R.id.btnProductTab ? View.VISIBLE : View.GONE);
+            layoutManagerSaleOffTab.setVisibility(checkedId == R.id.btnSaleOffTab ? View.VISIBLE : View.GONE);
+        });
+        layoutManagerCatalogTab.setVisibility(View.VISIBLE);
+        layoutManagerProductTab.setVisibility(View.GONE);
+        layoutManagerSaleOffTab.setVisibility(View.GONE);
 
         bottomNavigationView.setSelectedItemId(R.id.nav_products);
         bottomNavigationView.setOnItemSelectedListener(item -> {
