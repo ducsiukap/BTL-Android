@@ -6,6 +6,7 @@ public class ProductDto {
     private Long id;
     private String name;
     private String description;
+    private Boolean isSelling;
     private Double originalPrice;
     private Boolean isSaleOff;
     private Double discountedPrice;
@@ -21,6 +22,10 @@ public class ProductDto {
 
     public String getDescription() {
         return description;
+    }
+
+    public Boolean getSelling() {
+        return isSelling;
     }
 
     public Double getOriginalPrice() {

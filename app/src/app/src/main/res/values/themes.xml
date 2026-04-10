@@ -7,6 +7,7 @@
         <item name="colorSurface">@color/brand_surface</item>
         <item name="colorSurfaceVariant">@color/brand_surface_variant</item>
         <item name="colorError">@color/brand_error</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
     </style>
 
     <style name="Theme.DDHT" parent="Base.Theme.DDHT" />

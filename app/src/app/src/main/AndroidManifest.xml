@@ -27,6 +27,9 @@
             android:name=".ui.manager.ManagerActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.manager.ProductDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.common.HomeActivity"
             android:exported="false" />
         <activity

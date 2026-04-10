@@ -69,6 +69,7 @@ public class HomeActivity extends AppCompatActivity {
         layoutCatalogFilters = findViewById(R.id.layoutCatalogFilters);
         LinearLayout layoutProducts = findViewById(R.id.layoutHomeProducts);
         android.widget.FrameLayout layoutAccount = findViewById(R.id.layoutHomeAccount);
+        LinearLayout layoutOrders = findViewById(R.id.layoutHomeOrders);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
 
         rvProducts.setLayoutManager(new GridLayoutManager(this, 2));
@@ -95,6 +96,12 @@ public class HomeActivity extends AppCompatActivity {
             tvWelcome.setText(R.string.home_guest_welcome);
         }
 
+        String role = sessionManager.getUserRole();
+        boolean isStaff = role != null && role.equalsIgnoreCase("STAFF");
+        if (bottomNavigationView.getMenu().findItem(R.id.nav_orders) != null) {
+            bottomNavigationView.getMenu().findItem(R.id.nav_orders).setVisible(isStaff);
+        }
+
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.layoutHomeAccount, new AccountFragment())
                 .commit();
@@ -103,11 +110,19 @@ public class HomeActivity extends AppCompatActivity {
         bottomNavigationView.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.nav_products) {
                 layoutProducts.setVisibility(View.VISIBLE);
+                layoutOrders.setVisibility(View.GONE);
+                layoutAccount.setVisibility(View.GONE);
+                return true;
+            }
+            if (item.getItemId() == R.id.nav_orders && isStaff) {
+                layoutProducts.setVisibility(View.GONE);
+                layoutOrders.setVisibility(View.VISIBLE);
                 layoutAccount.setVisibility(View.GONE);
                 return true;
             }
             if (item.getItemId() == R.id.nav_account) {
                 layoutProducts.setVisibility(View.GONE);
+                layoutOrders.setVisibility(View.GONE);
                 layoutAccount.setVisibility(View.VISIBLE);
                 return true;
             }

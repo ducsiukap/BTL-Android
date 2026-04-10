@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.ddht.R;
 import com.example.ddht.ui.common.fragment.AccountFragment;
 import com.example.ddht.ui.manager.fragment.CatalogFragment;
+import com.example.ddht.ui.manager.fragment.ManagerProductsFragment;
 import com.example.ddht.ui.manager.fragment.ManagerUsersFragment;
 import com.example.ddht.ui.manager.fragment.SaleOffFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -53,10 +54,14 @@ public class ManagerActivity extends AppCompatActivity {
             .commit();
 
         getSupportFragmentManager().beginTransaction()
+                .replace(R.id.layoutManagerProductTab, new ManagerProductsFragment())
+                .commit();
+
+        getSupportFragmentManager().beginTransaction()
             .replace(R.id.layoutManagerSaleOffTab, new SaleOffFragment())
             .commit();
 
-        toggleManagerProductTabs.check(R.id.btnCatalogTab);
+        toggleManagerProductTabs.check(R.id.btnProductTab);
         toggleManagerProductTabs.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) {
                 return;
@@ -65,8 +70,8 @@ public class ManagerActivity extends AppCompatActivity {
             layoutManagerProductTab.setVisibility(checkedId == R.id.btnProductTab ? View.VISIBLE : View.GONE);
             layoutManagerSaleOffTab.setVisibility(checkedId == R.id.btnSaleOffTab ? View.VISIBLE : View.GONE);
         });
-        layoutManagerCatalogTab.setVisibility(View.VISIBLE);
-        layoutManagerProductTab.setVisibility(View.GONE);
+        layoutManagerCatalogTab.setVisibility(View.GONE);
+        layoutManagerProductTab.setVisibility(View.VISIBLE);
         layoutManagerSaleOffTab.setVisibility(View.GONE);
 
         bottomNavigationView.setSelectedItemId(R.id.nav_products);
