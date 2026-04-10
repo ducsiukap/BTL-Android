@@ -59,7 +59,7 @@ paths:
           $ref: '#/components/responses/InternalServerErrorResponse'
 
   /catalogs/{id}:
-    post:
+    put:
       tags:
         - Catalogs
       summary: Update catalog by id

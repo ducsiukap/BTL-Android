@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="10dp">
+
+        <ImageView
+            android:id="@+id/ivManageProductImage"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/product_image_placeholder" />
+
+        <TextView
+            android:id="@+id/tvManageProductImageLabel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+
+        <ImageButton
+            android:id="@+id/btnManageProductImageDelete"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_action_icon_button"
+            android:contentDescription="@string/common_delete"
+            android:padding="8dp"
+            android:src="@android:drawable/ic_menu_delete"
+            android:tint="@color/brand_error" />
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

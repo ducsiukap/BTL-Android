@@ -38,7 +38,7 @@ public class CatalogController {
         return ResponseEntity.ok(ApiResponse.success(catalog));
     }
 
-    @PostMapping("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<CatalogResponse>> updateCatalog(
             @PathVariable Long id,
             @Valid @RequestBody ModifyCatalogRequest request
