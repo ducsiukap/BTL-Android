@@ -64,10 +64,16 @@ public class UserServiceImpl implements UserService {
         return UserResponseDto.from(user);
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     @PreAuthorize("hasRole('MANAGER')")
     public UserResponseDto createUser(
+            CreateUserRequest request
+    ) {
+        return createUserNoAuth(request);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public UserResponseDto createUserNoAuth(
             CreateUserRequest request
     ) {
 
