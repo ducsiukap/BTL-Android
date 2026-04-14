@@ -10,13 +10,9 @@ import java.util.UUID;
 public interface OrderService {
     OrderResponse createOrder(CreateOrderRequest request);
     
-    OrderResponse getOrderById(Long id);
-    
     OrderResponse getOrderByCode(String code);
     
     List<OrderResponse> getOrdersByStatus(OrderStatus status);
-    
-    List<OrderResponse> getOrdersByStaff(UUID staffId);
     
     OrderResponse updateStatus(Long id, OrderStatus status);
     

@@ -2,6 +2,7 @@ package com.example.app_be.model;
 
 import com.example.app_be.model.base.LongIdBaseEntity;
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -17,7 +18,7 @@ import java.util.List;
         name = "orders",
         indexes = {
                 @Index(name = "idx_order_code", columnList = "code", unique = true),
-                @Index(name = "idx_order_staff", columnList = "staff_id")
+                @Index(name = "idx_order_staff", columnList = "user_id")
         }
 )
 @Getter

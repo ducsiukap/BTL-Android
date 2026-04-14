@@ -31,6 +31,7 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("com.mysql:mysql-connector-j")
     annotationProcessor("org.projectlombok:lombok")
+    implementation("io.github.cdimascio:dotenv-java:3.1.0")
 
     // Source: https://mvnrepository.com/artifact/com.cloudinary/cloudinary-http44
     implementation("com.cloudinary:cloudinary-http44:1.39.0")

@@ -76,13 +76,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderResponse getOrderById(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-        return toOrderResponse(order);
-    }
-
-    @Override
     public OrderResponse getOrderByCode(String code) {
         Order order = orderRepository.findByCode(code)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with code: " + code));
@@ -92,12 +85,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderResponse> getOrdersByStatus(OrderStatus status) {
         return orderRepository.findByStatus(status)
-                .stream().map(this::toOrderResponse).collect(Collectors.toList());
-    }
-
-    @Override
-    public List<OrderResponse> getOrdersByStaff(UUID staffId) {
-        return orderRepository.findByUserId(staffId)
                 .stream().map(this::toOrderResponse).collect(Collectors.toList());
     }
 

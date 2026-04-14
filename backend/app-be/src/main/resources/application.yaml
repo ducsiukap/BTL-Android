@@ -11,7 +11,7 @@ spring:
       max-request-size: 200MB
 
   datasource:
-    url: jdbc:mysql://localhost:3306/${DB_NAME:android_db}?useSSL=false
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:android_db}?useSSL=true&allowPublicKeyRetrieval=true
     username: ${DB_USER:root}
     password: "${DB_PASSWORD:vduczz#13304}"
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -22,7 +22,7 @@ spring:
         #        format_sql: true
         default_batch_fetch_size: 100
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
 
   flyway:
     enabled: true
