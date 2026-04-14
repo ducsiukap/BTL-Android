@@ -33,17 +33,26 @@ public class SecurityConfig {
                                         "/api/v1/auth/login",
                                         "/api/v1/health",
                                         "/error",
-                                        "/api/v1/users/no-auth"
+                                        "/api/v1/users/no-auth",
+                                        "/api/v1/orders",
+                                        "/api/v1/orders/*"
                                         //,"/api/v1/users"
                                 ).permitAll()
                                 .requestMatchers(HttpMethod.GET,
                                         "/api/v1/products/**", "/api/v1/catalogs/**",
-                                        "/api/v1/saleoffs/**", "/api/v1/product-images/**"
+                                        "/api/v1/saleoffs/**", "/api/v1/product-images/**",
+                                        "/api/v1/orders/*"
                                 ).permitAll()
                                 .requestMatchers(
                                         "/api/v1/products/**", "/api/v1/catalogs/**",
                                         "/api/v1/saleoffs/**", "/api/v1/product-images/**"
                                 ).hasRole("MANAGER")
+                                .requestMatchers(
+                                        "/api/v1/orders/pending",
+                                        "/api/v1/orders/*/paid",
+                                        "/api/v1/orders/*/status",
+                                        "/api/v1/orders/*/assign"
+                                ).hasAnyRole("STAFF", "MANAGER")
                                 .anyRequest().authenticated()
                 ).sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
