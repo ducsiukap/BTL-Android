@@ -33,6 +33,12 @@
             android:name=".ui.common.HomeActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.common.CartActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.common.OrderLookupActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.common.SplashActivity"
             android:exported="true">
             <intent-filter>

@@ -21,10 +21,24 @@ import java.util.List;
 import java.util.Locale;
 
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductViewHolder> {
+    public interface OnProductClickListener {
+        void onProductClick(Product product);
+    }
+
     private final List<Product> products = new ArrayList<>();
+    private OnProductClickListener listener;
 
     public ProductAdapter(List<Product> products) {
         submit(products);
+    }
+
+    public ProductAdapter(List<Product> products, OnProductClickListener listener) {
+        this.listener = listener;
+        submit(products);
+    }
+
+    public void setOnProductClickListener(OnProductClickListener listener) {
+        this.listener = listener;
     }
 
     public void submit(List<Product> items) {
@@ -69,6 +83,12 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
                 .placeholder(R.drawable.product_image_placeholder)
                 .error(R.drawable.product_image_placeholder)
                 .into(holder.ivProductImage);
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onProductClick(product);
+            }
+        });
     }
 
     @Override

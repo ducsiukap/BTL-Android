@@ -83,7 +83,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse getOrderByCode(String code) {
-        Order order = orderRepository.findByCode(code)
+        Order order = orderRepository.findByCodeContainingIgnoreCase(code.trim())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with code: " + code));
         return toOrderResponse(order);
     }
@@ -91,6 +91,12 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<OrderResponse> getOrdersByStatus(OrderStatus status) {
         return orderRepository.findByStatus(status)
+                .stream().map(this::toOrderResponse).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<OrderResponse> getStaffQueueOrders() {
+        return orderRepository.findByStatusInOrderByCreatedAtDesc(List.of(OrderStatus.PENDING, OrderStatus.PREPARING))
                 .stream().map(this::toOrderResponse).collect(Collectors.toList());
     }
 
