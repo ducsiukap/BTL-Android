@@ -9,6 +9,7 @@ import com.example.app_be.model.*;
 import com.example.app_be.repository.*;
 import com.example.app_be.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final SaleOffRepository saleOffRepository;
     private final UserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -71,8 +73,12 @@ public class OrderServiceImpl implements OrderService {
 
         // 4. Lưu vào Database
         Order savedOrder = orderRepository.save(order);
+        OrderResponse response = toOrderResponse(savedOrder);
 
-        return toOrderResponse(savedOrder);
+        // [WS] Thông báo cho nhân viên có đơn hàng mới
+        messagingTemplate.convertAndSend("/topic/staff/new-order", response);
+
+        return response;
     }
 
     @Override
@@ -92,25 +98,72 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(rollbackFor = Exception.class)
     public OrderResponse updateStatus(Long id, OrderStatus status) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+
+        // Logic kiểm tra chuyển đổi trạng thái hợp lệ
+        validateStatusTransition(order.getStatus(), status);
+
         order.setStatus(status);
-        return toOrderResponse(order);
+        Order savedOrder = orderRepository.save(order);
+        OrderResponse response = toOrderResponse(savedOrder);
+
+        // [WS] Thông báo trạng thái mới cho khách hàng
+        messagingTemplate.convertAndSend("/topic/order/" + savedOrder.getCode() + "/status", response);
+
+        return response;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public OrderResponse markAsPaid(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
         
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new IllegalStateException("Chỉ có thể thanh toán cho đơn hàng đang ở trạng thái CHỜ (PENDING).");
+        }
+
         order.setPaid(true);
         order.setPaymentTime(Instant.now());
-        // Khi thanh toán tại quầy, thường chuyển sang chuẩn bị đồ luôn
-        if (order.getStatus() == OrderStatus.PENDING) {
-            order.setStatus(OrderStatus.PREPARING);
-        }
         
-        return toOrderResponse(order);
+        // Khi thanh toán xong, đơn hàng mặc định chuyển sang trạng thái đang làm
+        order.setStatus(OrderStatus.PREPARING);
+        
+        Order savedOrder = orderRepository.save(order);
+        OrderResponse response = toOrderResponse(savedOrder);
+
+        // [WS] Thông báo cho khách hàng là đơn đã được thanh toán
+        messagingTemplate.convertAndSend("/topic/order/" + savedOrder.getCode() + "/status", response);
+
+        return response;
+    }
+
+    private void validateStatusTransition(OrderStatus current, OrderStatus target) {
+        if (current == target) return;
+
+        // Nếu đơn đã hủy hoặc đã hoàn thành thì không được đổi sang trạng thái khác
+        if (current == OrderStatus.CANCELLED || current == OrderStatus.COMPLETED) {
+            throw new IllegalStateException("Đơn hàng đã kết thúc, không thể đổi trạng thái.");
+        }
+
+        switch (target) {
+            case PREPARING:
+                // PREPARING thường đến từ PENDING (đã thanh toán)
+                break;
+            case READY:
+                if (current != OrderStatus.PREPARING) {
+                    throw new IllegalStateException("Chỉ đơn hàng đang ĐANG LÀM mới có thể chuyển sang SẴN SÀNG.");
+                }
+                break;
+            case COMPLETED:
+                if (current != OrderStatus.READY) {
+                    throw new IllegalStateException("Chỉ đơn hàng SẴN SÀNG mới có thể chuyển sang HOÀN THÀNH.");
+                }
+                break;
+            case CANCELLED:
+                // Có thể hủy bất cứ lúc nào miễn là chưa xong
+                break;
+        }
     }
 
     @Override
@@ -123,7 +176,14 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
         
         order.setUser(staff);
-        return toOrderResponse(order);
+
+        Order savedOrder = orderRepository.save(order);
+        OrderResponse response = toOrderResponse(savedOrder);
+
+        // [WS] Thông báo cho khách hàng là đã có nhân viên nhận đơn
+        messagingTemplate.convertAndSend("/topic/order/" + savedOrder.getCode() + "/status", response);
+
+        return response;
     }
 
     // Logic sinh mã đơn hàng: OD-YYYYMMDD-xxx
