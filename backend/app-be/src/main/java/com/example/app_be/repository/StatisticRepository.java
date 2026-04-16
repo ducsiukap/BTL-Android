@@ -20,8 +20,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
             select coalesce(sum(o.total_price), 0)
             from orders o
             where o.is_paid = 1
-            and o.payment_time >= :from
-            and o.payment_time <= :to
+                and o.payment_time >= :from
+                and o.payment_time <= :to
             """, nativeQuery = true)
     BigDecimal sumRevenue(@Param("from") Instant from, @Param("to") Instant to);
 
@@ -37,8 +37,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
             select count(*)
             from orders o
             where o.is_paid = 1
-            and o.payment_time >= :from
-            and o.payment_time <= :to
+                and o.payment_time >= :from
+                and o.payment_time <= :to
             """, nativeQuery = true)
     Long countPaidOrdes(@Param("from") Instant from, @Param("to") Instant to);
 
@@ -46,8 +46,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
             select count(*)
             from orders o
             where o.status = 'COMPLETED'
-            and o.created_at >= :from
-            and o.created_at <= :to
+                and o.created_at >= :from
+                and o.created_at <= :to
             """, nativeQuery = true)
     Long countCompletedOrders (@Param("from") Instant from, @Param("to") Instant to);
 
@@ -55,8 +55,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
             select count(*)
             from orders o
             where o.status = 'CANCELED'
-            and o.created_at >= :from
-            and o.created_at <= :to
+                and o.created_at >= :from
+                and o.created_at <= :to
             """, nativeQuery = true)
     Long countCanceledOrders (@Param("from") Instant from, @Param("to") Instant to);
 
@@ -66,8 +66,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                     count(*) as orderCount
             from orders o
             where o.is_paid = 1
-            and o.payment_time >= :from
-            and o.payment_time <= :to
+                and o.payment_time >= :from
+                and o.payment_time <= :to
             group by dat_format(o.payment_time, '%Y-%m-%d') 
             order by bucket
             """, nativeQuery = true)
@@ -79,8 +79,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                     count(*) as orderCount
             from orders o
             where o.is_paid = 1
-            and o.payment_time >= :from
-            and o.payment_time <= :to
+                and o.payment_time >= :from
+                and o.payment_time <= :to
             group by year(o.payment_time), week(o.payment_time, 3)
             order by year(o.payment_time), week(o.payment_time, 3)
             """, nativeQuery = true)
@@ -92,8 +92,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                    count(*) as orderCount
             from orders o
             where o.is_paid = 1
-              and o.payment_time >= :from
-              and o.payment_time < :to
+                and o.payment_time >= :from
+                and o.payment_time < :to
             group by dat_format(o.payment_time, '%Y-%m')
             order by bucket
             """, nativeQuery = true)
@@ -105,8 +105,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                    count(*) as orderCount
             from orders o
             where o.is_paid = 1
-              and o.payment_time >= :from
-              and o.payment_time < :to
+                and o.payment_time >= :from
+                and o.payment_time < :to
             group by year(o.payment_time), quarter(o.payment_time)
             order by year(o.payment_time), quarter(o.payment_time)
             """, nativeQuery = true)
@@ -118,8 +118,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                    count(*) as orderCount
             from orders o
             where o.is_paid = 1
-              and o.payment_time >= :from
-              and o.payment_time < :to
+                and o.payment_time >= :from
+                and o.payment_time < :to
             group by date_format(o.payment_time, '%Y')
             order by bucket
             """, nativeQuery = true)
@@ -131,7 +131,7 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                    count(*) as orderCount
             from orders o
             where o.created_at >= :from
-              and o.created_at < :to
+                and o.created_at < :to
             group by date_format(o.created_at, '%Y-%m-%d')
             order by bucket
             """, nativeQuery = true)
@@ -143,7 +143,7 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                    count(*) as orderCount
             from orders o
             where o.created_at >= :from
-              and o.created_at < :to
+                and o.created_at < :to
             group by year(o.created_at), week(o.created_at, 3)
             order by year(o.created_at), week(o.created_at, 3)
             """, nativeQuery = true)
@@ -155,7 +155,7 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                    count(*) as orderCount
             from orders o
             where o.created_at >= :from
-              and o.created_at < :to
+                and o.created_at < :to
             group by date_format(o.created_at, '%Y-%m')
             order by bucket
             """, nativeQuery = true)
@@ -167,7 +167,7 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                    count(*) AS orderCount
             from orders o
             where o.created_at >= :from
-              and o.created_at < :to
+                and o.created_at < :to
             group by year(o.created_at), quarter(o.created_at)
             order by year(o.created_at), quarter(o.created_at)
             """, nativeQuery = true)
@@ -179,7 +179,7 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                    count(*) as orderCount
             from orders o
             where o.created_at >= :from
-              and o.created_at < :to
+                and o.created_at < :to
             group by date_format(o.created_at, '%Y')
             order by bucket
             """, nativeQuery = true)
@@ -197,8 +197,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
             join products p on p.id = oi.product_id
             left join catalog c on c.id = p.catalog_id
             where o.is_paid = 1
-              and o.payment_time >= :from
-              and o.payment_time < :to
+                and o.payment_time >= :from
+                and o.payment_time < :to
             group by p.id, p.name, c.id, c.name
             order by revenue desc, soldQuantity desc
             limit :limitValue
@@ -221,8 +221,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
             JOIN products p on p.id = oi.product_id
             left join catalog c on c.id = p.catalog_id
             where o.is_paid = 1
-              and o.payment_time >= :from
-              and o.payment_time < :to
+                and o.payment_time >= :from
+                and o.payment_time < :to
             group by p.id, p.name, c.id, c.name
             order by soldQuantity desc, revenue desc
             limit :limitValue
@@ -244,8 +244,8 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
             join products p on p.id = oi.product_id
             left join catalog c on c.id = p.catalog_id
             where o.is_paid = 1
-              and o.payment_time >= :from
-              and o.payment_time < :to
+                and o.payment_time >= :from
+                and o.payment_time < :to
             group by c.id, c.name
             order by revenue desc
             """, nativeQuery = true)
@@ -263,7 +263,7 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
             from orders o
             join users u on u.id = o.user_id
             where o.created_at >= :from
-              and o.created_at < :to
+                and o.created_at < :to
             group by u.id, u.full_name
             order by assignedOrders desc
             """, nativeQuery = true)
@@ -277,7 +277,7 @@ public interface StatisticRepository extends JpaRepository<Order, Long>  {
                    count(*) as count
             from orders o
             where o.created_at >= :from
-              and o.created_at < :to
+                and o.created_at < :to
             group by o.status
             order by count desc
             """, nativeQuery = true)
