@@ -34,7 +34,7 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class StatisticServiceImpl implements StatisticService {
 
-     private StatisticRepository statisticRepository;
+     private final StatisticRepository statisticRepository;
 
      @Override
      public StatisticOverViewResponse getOverView(Instant from, Instant to) {
