@@ -83,6 +83,17 @@ public class ProductDetailActivity extends AppCompatActivity {
     private Long productId;
     private ProductDto currentProduct;
     private boolean bindingSwitch = false;
+    private int selectedQuantity = 1;
+
+    // Shopping Views
+    private TextView tvQty;
+    private Button btnAddToCart;
+    private View layoutShopping;
+    private View layoutManagerActions;
+    private ImageButton btnEdit;
+    private ImageButton btnDelete;
+    private ImageButton btnEditImages;
+    private Button btnAddSaleOff;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,11 +114,38 @@ public class ProductDetailActivity extends AppCompatActivity {
         tvStatus = findViewById(R.id.tvProductDetailStatus);
         switchSelling = findViewById(R.id.switchProductDetailSelling);
 
+        // Shopping Views
+        layoutShopping = findViewById(R.id.layoutProductDetailShopping);
+        tvQty = findViewById(R.id.tvProductDetailQty);
+        ImageButton btnQtyMinus = findViewById(R.id.btnProductDetailQtyMinus);
+        ImageButton btnQtyPlus = findViewById(R.id.btnProductDetailQtyPlus);
+        btnAddToCart = findViewById(R.id.btnProductDetailAddToCart);
+
+        // Manager Views
+        layoutManagerActions = findViewById(R.id.layoutProductDetailManagerActions);
+        btnEdit = findViewById(R.id.btnProductDetailEdit);
+        btnDelete = findViewById(R.id.btnProductDetailDelete);
+        btnEditImages = findViewById(R.id.btnProductDetailEditImages);
+        btnAddSaleOff = findViewById(R.id.btnProductDetailAddSaleOff);
+
         ImageButton btnBack = findViewById(R.id.btnProductDetailBack);
-        ImageButton btnEdit = findViewById(R.id.btnProductDetailEdit);
-        ImageButton btnDelete = findViewById(R.id.btnProductDetailDelete);
-        ImageButton btnEditImages = findViewById(R.id.btnProductDetailEditImages);
-        android.widget.Button btnAddSaleOff = findViewById(R.id.btnProductDetailAddSaleOff);
+
+        // Role-based visibility logic
+        String role = sessionManager.getUserRole();
+        boolean isStaffOrManager = role != null && (role.equalsIgnoreCase("MANAGER") || role.equalsIgnoreCase("STAFF"));
+        
+        // For demo: if not logged in or is custom client, show shopping, hide manager
+        if (isStaffOrManager) {
+            layoutManagerActions.setVisibility(View.VISIBLE);
+            btnEditImages.setVisibility(View.VISIBLE);
+            btnAddSaleOff.setVisibility(View.VISIBLE);
+            switchSelling.setVisibility(View.VISIBLE);
+        } else {
+            layoutManagerActions.setVisibility(View.GONE);
+            btnEditImages.setVisibility(View.GONE);
+            btnAddSaleOff.setVisibility(View.GONE);
+            switchSelling.setVisibility(View.GONE);
+        }
 
         pickDetailImagesLauncher = registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), this::handlePickedDetailImages);
 
@@ -134,6 +172,21 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
 
         btnBack.setOnClickListener(v -> finish());
+        
+        // Shopping logic
+        btnQtyMinus.setOnClickListener(v -> {
+            if (selectedQuantity > 1) {
+                selectedQuantity--;
+                tvQty.setText(String.valueOf(selectedQuantity));
+            }
+        });
+        btnQtyPlus.setOnClickListener(v -> {
+            selectedQuantity++;
+            tvQty.setText(String.valueOf(selectedQuantity));
+        });
+        btnAddToCart.setOnClickListener(v -> addToCart());
+
+        // Manager logic
         btnEdit.setOnClickListener(v -> showEditDialog());
         btnDelete.setOnClickListener(v -> confirmDelete());
         btnEditImages.setOnClickListener(v -> showManageImagesDialog());
@@ -146,6 +199,30 @@ public class ProductDetailActivity extends AppCompatActivity {
         });
 
         loadProduct();
+    }
+
+    private void addToCart() {
+        if (currentProduct == null) return;
+        
+        // Convert ProductDto to Product model
+        double originalPrice = currentProduct.getOriginalPrice() == null ? 0 : currentProduct.getOriginalPrice();
+        double displayPrice = currentProduct.getDiscountedPrice() == null ? originalPrice : currentProduct.getDiscountedPrice();
+        String imageUrl = (currentProduct.getImages() != null && !currentProduct.getImages().isEmpty()) 
+                ? currentProduct.getImages().get(0).getUrl() : null;
+        
+        com.example.ddht.data.model.Product modelProduct = new com.example.ddht.data.model.Product(
+                currentProduct.getId(),
+                currentProduct.getName(),
+                currentProduct.getDescription(),
+                displayPrice,
+                originalPrice,
+                Boolean.TRUE.equals(currentProduct.getSaleOff()),
+                imageUrl
+        );
+        
+        com.example.ddht.data.manager.CartManager.getInstance().addProduct(modelProduct, selectedQuantity);
+        Toast.makeText(this, "Đã thêm " + selectedQuantity + " " + modelProduct.getName() + " vào giỏ hàng", Toast.LENGTH_SHORT).show();
+        finish();
     }
 
     private void loadProduct() {

@@ -17,6 +17,8 @@ public interface OrderService {
     OrderResponse updateStatus(Long id, OrderStatus status);
     
     OrderResponse markAsPaid(Long id);
+    
+    List<OrderResponse> getStaffQueueOrders();
 
     OrderResponse assignStaff(Long id, UUID staffId);
 }

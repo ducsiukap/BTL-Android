@@ -42,7 +42,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET,
                                         "/api/v1/products/**", "/api/v1/catalogs/**",
                                         "/api/v1/saleoffs/**", "/api/v1/product-images/**",
-                                        "/api/v1/orders/*"
+                                        "/api/v1/orders/code/**"
                                 ).permitAll()
                                 .requestMatchers(
                                         "/api/v1/products/**", "/api/v1/catalogs/**",
@@ -52,7 +52,8 @@ public class SecurityConfig {
                                         "/api/v1/orders/pending",
                                         "/api/v1/orders/*/paid",
                                         "/api/v1/orders/*/status",
-                                        "/api/v1/orders/*/assign"
+                                        "/api/v1/orders/*/assign",
+                                        "/api/v1/orders/**"
                                 ).hasAnyRole("STAFF", "MANAGER")
                                 .anyRequest().authenticated()
                 ).sessionManagement(session ->

@@ -1,5 +1,6 @@
 package com.example.ddht.ui.common;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.graphics.Rect;
@@ -22,17 +23,23 @@ import com.example.ddht.R;
 import com.example.ddht.data.model.Product;
 import com.example.ddht.data.remote.dto.ApiResponse;
 import com.example.ddht.data.remote.dto.CatalogDto;
+import com.example.ddht.data.remote.dto.OrderResponse;
+import com.example.ddht.data.remote.dto.OrderStatus;
 import com.example.ddht.data.remote.dto.ProductDto;
 import com.example.ddht.data.remote.dto.ProductImageDto;
 import com.example.ddht.data.repository.CatalogRepository;
+import com.example.ddht.data.repository.OrderRepository;
 import com.example.ddht.data.repository.ProductRepository;
 import com.example.ddht.ui.common.adapter.ProductAdapter;
+import com.example.ddht.ui.common.adapter.StaffOrderAdapter;
 import com.example.ddht.ui.common.fragment.AccountFragment;
+import com.example.ddht.ui.manager.ProductDetailActivity;
 import com.example.ddht.utils.SessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -50,6 +57,10 @@ public class HomeActivity extends AppCompatActivity {
     private Long selectedCatalogId = null;
     private String currentQuery = "";
 
+    // Order (Staff)
+    private OrderRepository orderRepository;
+    private StaffOrderAdapter staffOrderAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +69,7 @@ public class HomeActivity extends AppCompatActivity {
         sessionManager = new SessionManager(this);
         catalogRepository = new CatalogRepository();
         productRepository = new ProductRepository();
+        orderRepository = new OrderRepository();
 
         RecyclerView rvProducts = findViewById(R.id.rvProducts);
         edtProductSearch = findViewById(R.id.edtProductSearch);
@@ -72,13 +84,37 @@ public class HomeActivity extends AppCompatActivity {
         LinearLayout layoutOrders = findViewById(R.id.layoutHomeOrders);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
 
+        // Products RecyclerView
         rvProducts.setLayoutManager(new GridLayoutManager(this, 2));
         int spacingPx = dpToPx(8);
         if (rvProducts.getItemDecorationCount() == 0) {
             rvProducts.addItemDecoration(new GridSpacingItemDecoration(2, spacingPx));
         }
-        productAdapter = new ProductAdapter(new ArrayList<>());
+        productAdapter = new ProductAdapter(new ArrayList<>(), product -> {
+            Intent intent = new Intent(HomeActivity.this, ProductDetailActivity.class);
+            intent.putExtra(ProductDetailActivity.EXTRA_PRODUCT_ID, product.getId());
+            startActivity(intent);
+        });
         rvProducts.setAdapter(productAdapter);
+
+        // Staff Orders RecyclerView
+        RecyclerView rvStaffOrders = findViewById(R.id.rvStaffOrders);
+        if (rvStaffOrders != null) {
+            rvStaffOrders.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+            staffOrderAdapter = new StaffOrderAdapter(new StaffOrderAdapter.OnOrderActionListener() {
+                @Override
+                public void onUpdateStatus(OrderResponse order, OrderStatus nextStatus) {
+                    updateStaffOrderStatus(order.getId(), nextStatus.name());
+                }
+
+                @Override
+                public void onMarkAsPaid(OrderResponse order) {
+                    markStaffOrderAsPaid(order.getId());
+                }
+            });
+            rvStaffOrders.setAdapter(staffOrderAdapter);
+        }
+        
 
         btnSearchProducts.setOnClickListener(v -> searchProducts());
         edtProductSearch.setOnEditorActionListener((v, actionId, event) -> {
@@ -118,6 +154,7 @@ public class HomeActivity extends AppCompatActivity {
                 layoutProducts.setVisibility(View.GONE);
                 layoutOrders.setVisibility(View.VISIBLE);
                 layoutAccount.setVisibility(View.GONE);
+                loadStaffOrders();
                 return true;
             }
             if (item.getItemId() == R.id.nav_account) {
@@ -129,12 +166,83 @@ public class HomeActivity extends AppCompatActivity {
             return false;
         });
 
-        btnOpenCart.setOnClickListener(v -> Toast.makeText(this, R.string.todo_open_cart, Toast.LENGTH_SHORT).show());
-        btnCreateOrder.setOnClickListener(v -> Toast.makeText(this, R.string.todo_create_order, Toast.LENGTH_SHORT).show());
+        btnOpenCart.setOnClickListener(v -> {
+            Intent intent = new Intent(this, CartActivity.class);
+            startActivity(intent);
+        });
+        
+        btnCreateOrder.setText(R.string.order_lookup_title);
+        btnCreateOrder.setOnClickListener(v -> {
+            Intent intent = new Intent(this, OrderLookupActivity.class);
+            startActivity(intent);
+        });
 
         loadCatalogs();
         loadProducts(currentQuery);
     }
+
+    private void loadStaffOrders() {
+        if (staffOrderAdapter == null) return;
+        
+        String token = "Bearer " + sessionManager.getAccessToken();
+        orderRepository.getStaffQueueOrders(token).enqueue(new Callback<ApiResponse<List<OrderResponse>>>() {
+            @Override
+            public void onResponse(@NonNull Call<ApiResponse<List<OrderResponse>>> call, 
+                                   @NonNull Response<ApiResponse<List<OrderResponse>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    staffOrderAdapter.submitList(response.body().getData());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ApiResponse<List<OrderResponse>>> call, @NonNull Throwable t) {
+                Toast.makeText(HomeActivity.this, "Lỗi tải đơn hàng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateStaffOrderStatus(Long orderId, String status) {
+        String token = "Bearer " + sessionManager.getAccessToken();
+        orderRepository.updateOrderStatus(orderId, status, token).enqueue(new Callback<ApiResponse<OrderResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, 
+                                   @NonNull Response<ApiResponse<OrderResponse>> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(HomeActivity.this, "Cập nhật trạng thái thành công", Toast.LENGTH_SHORT).show();
+                    loadStaffOrders();
+                } else {
+                    Toast.makeText(HomeActivity.this, "Lỗi " + response.code() + ": Không thể cập nhật trạng thái", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Throwable t) {
+                Toast.makeText(HomeActivity.this, "Lỗi cập nhật: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void markStaffOrderAsPaid(Long orderId) {
+        String token = "Bearer " + sessionManager.getAccessToken();
+        orderRepository.markAsPaid(orderId, token).enqueue(new Callback<ApiResponse<OrderResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, 
+                                   @NonNull Response<ApiResponse<OrderResponse>> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(HomeActivity.this, "Đã xác nhận thanh toán", Toast.LENGTH_SHORT).show();
+                    loadStaffOrders();
+                } else {
+                    Toast.makeText(HomeActivity.this, "Lỗi " + response.code() + ": Không thể xác nhận thanh toán", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Throwable t) {
+                Toast.makeText(HomeActivity.this, "Lỗi thanh toán: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 
     private void searchProducts() {
         currentQuery = edtProductSearch.getText() == null ? "" : edtProductSearch.getText().toString().trim();
@@ -182,7 +290,7 @@ public class HomeActivity extends AppCompatActivity {
                     && dto.getDiscountedPrice() != null
                     && dto.getDiscountedPrice() < originalPrice;
             String imageUrl = resolveImageUrl(dto);
-            mapped.add(new Product(name, subtitle, displayPrice, originalPrice, saleOff, imageUrl));
+            mapped.add(new Product(dto.getId(), name, subtitle, displayPrice, originalPrice, saleOff, imageUrl));
         }
         return mapped;
     }
@@ -291,14 +399,10 @@ public class HomeActivity extends AppCompatActivity {
         @Override
         public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
             int position = parent.getChildAdapterPosition(view);
-            if (position == RecyclerView.NO_POSITION) {
-                return;
-            }
-
             int column = position % spanCount;
             outRect.left = spacing - column * spacing / spanCount;
             outRect.right = (column + 1) * spacing / spanCount;
-            if (position >= spanCount) {
+            if (position < spanCount) {
                 outRect.top = spacing;
             }
             outRect.bottom = spacing;

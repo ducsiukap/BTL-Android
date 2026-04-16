@@ -29,7 +29,7 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(orderService.createOrder(request)));
     }
 
-    @GetMapping("/{code}")
+    @GetMapping("/code/{code}")
     public ResponseEntity<ApiResponse<OrderResponse>> getOrderByCode(
             @PathVariable String code
     ) {
@@ -39,6 +39,11 @@ public class OrderController {
     @GetMapping("/pending")
     public ResponseEntity<ApiResponse<List<OrderResponse>>> getPendingOrders() {
         return ResponseEntity.ok(ApiResponse.success(orderService.getOrdersByStatus(OrderStatus.PENDING)));
+    }
+
+    @GetMapping("/staff-queue")
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getStaffQueueOrders() {
+        return ResponseEntity.ok(ApiResponse.success(orderService.getStaffQueueOrders()));
     }
 
     @PutMapping("/{id}/paid")
