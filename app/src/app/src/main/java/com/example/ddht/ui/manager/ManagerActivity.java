@@ -13,6 +13,7 @@ import com.example.ddht.ui.common.fragment.AccountFragment;
 import com.example.ddht.ui.manager.fragment.CatalogFragment;
 import com.example.ddht.ui.manager.fragment.ManagerProductsFragment;
 import com.example.ddht.ui.manager.fragment.ManagerUsersFragment;
+import com.example.ddht.ui.manager.fragment.ManagerStatisticFragment;
 import com.example.ddht.ui.manager.fragment.SaleOffFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.ddht.ui.common.SplashActivity;
@@ -28,10 +29,12 @@ public class ManagerActivity extends AppCompatActivity {
         View layoutManagerProducts = findViewById(R.id.layoutManagerProducts);
         View layoutManagerUsers = findViewById(R.id.layoutManagerUsers);
         View layoutManagerAccount = findViewById(R.id.layoutManagerAccount);
+        View layoutManagerStatistic = findViewById(R.id.layoutManagerStatistic);
         FrameLayout layoutManagerCatalogTab = findViewById(R.id.layoutManagerCatalogTab);
         FrameLayout layoutManagerProductTab = findViewById(R.id.layoutManagerProductTab);
         FrameLayout layoutManagerSaleOffTab = findViewById(R.id.layoutManagerSaleOffTab);
-        com.google.android.material.button.MaterialButtonToggleGroup toggleManagerProductTabs = findViewById(R.id.toggleManagerProductTabs);
+        com.google.android.material.button.MaterialButtonToggleGroup toggleManagerProductTabs = findViewById(
+                R.id.toggleManagerProductTabs);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigationManager);
         TextView tvGreeting = findViewById(R.id.tvManagerGreeting);
 
@@ -50,16 +53,15 @@ public class ManagerActivity extends AppCompatActivity {
                 .commit();
 
         getSupportFragmentManager().beginTransaction()
-            .replace(R.id.layoutManagerCatalogTab, new CatalogFragment())
-            .commit();
-
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.layoutManagerProductTab, new ManagerProductsFragment())
+                .replace(R.id.layoutManagerStatistic, new ManagerStatisticFragment())
                 .commit();
 
         getSupportFragmentManager().beginTransaction()
-            .replace(R.id.layoutManagerSaleOffTab, new SaleOffFragment())
-            .commit();
+                .commit();
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.layoutManagerSaleOffTab, new SaleOffFragment())
+                .commit();
 
         toggleManagerProductTabs.check(R.id.btnProductTab);
         toggleManagerProductTabs.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
@@ -80,18 +82,28 @@ public class ManagerActivity extends AppCompatActivity {
                 layoutManagerProducts.setVisibility(View.VISIBLE);
                 layoutManagerUsers.setVisibility(View.GONE);
                 layoutManagerAccount.setVisibility(View.GONE);
+                layoutManagerStatistic.setVisibility(View.GONE);
                 return true;
             }
             if (item.getItemId() == R.id.nav_users) {
                 layoutManagerProducts.setVisibility(View.GONE);
                 layoutManagerUsers.setVisibility(View.VISIBLE);
                 layoutManagerAccount.setVisibility(View.GONE);
+                layoutManagerStatistic.setVisibility(View.GONE);
                 return true;
             }
             if (item.getItemId() == R.id.nav_account) {
                 layoutManagerProducts.setVisibility(View.GONE);
                 layoutManagerUsers.setVisibility(View.GONE);
                 layoutManagerAccount.setVisibility(View.VISIBLE);
+                layoutManagerStatistic.setVisibility(View.GONE);
+                return true;
+            }
+            if (item.getItemId() == R.id.nav_statistic) {
+                layoutManagerProducts.setVisibility(View.GONE);
+                layoutManagerUsers.setVisibility(View.GONE);
+                layoutManagerAccount.setVisibility(View.GONE);
+                layoutManagerStatistic.setVisibility(View.VISIBLE);
                 return true;
             }
             return false;

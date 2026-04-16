@@ -24,15 +24,13 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> createOrder(
-            @Valid @RequestBody CreateOrderRequest request
-    ) {
+            @Valid @RequestBody CreateOrderRequest request) {
         return ResponseEntity.ok(ApiResponse.success(orderService.createOrder(request)));
     }
 
     @GetMapping("/code/{code}")
     public ResponseEntity<ApiResponse<OrderResponse>> getOrderByCode(
-            @PathVariable String code
-    ) {
+            @PathVariable String code) {
         return ResponseEntity.ok(ApiResponse.success(orderService.getOrderByCode(code)));
     }
 
@@ -48,24 +46,21 @@ public class OrderController {
 
     @PutMapping("/{id}/paid")
     public ResponseEntity<ApiResponse<OrderResponse>> markAsPaid(
-            @PathVariable Long id
-    ) {
+            @PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(orderService.markAsPaid(id)));
     }
 
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<OrderResponse>> updateStatus(
             @PathVariable Long id,
-            @RequestParam OrderStatus status
-    ) {
+            @RequestParam OrderStatus status) {
         return ResponseEntity.ok(ApiResponse.success(orderService.updateStatus(id, status)));
     }
 
     @PutMapping("/{id}/assign")
     public ResponseEntity<ApiResponse<OrderResponse>> assignMe(
             @PathVariable Long id,
-            @AuthenticationPrincipal User currentUser
-    ) {
+            @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(ApiResponse.success(orderService.assignStaff(id, currentUser.getId())));
     }
 }

@@ -35,6 +35,7 @@
     <string name="nav_orders">Đơn hàng</string>
     <string name="nav_account">Tài khoản</string>
     <string name="nav_users">Người dùng</string>
+    <string name="nav_statisitc">Thống kê</string>
     <string name="account_guest_title">Bạn chưa đăng nhập</string>
     <string name="account_guest_desc">Đăng nhập để vào khu vực tài khoản và thao tác quản lý.</string>
     <string name="account_staff_title">Tài khoản nhân viên</string>
