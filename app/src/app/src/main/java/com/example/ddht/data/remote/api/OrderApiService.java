@@ -22,7 +22,10 @@ public interface OrderApiService {
     Call<ApiResponse<OrderResponse>> getOrderByCode(@Path("code") String code);
 
     @GET("orders/staff-queue")
-    Call<ApiResponse<List<OrderResponse>>> getStaffQueueOrders(@Header("Authorization") String bearerToken);
+    Call<ApiResponse<List<OrderResponse>>> getStaffQueueOrders(
+            @Header("Authorization") String bearerToken,
+            @Query("status") List<String> statuses
+    );
 
     @PUT("orders/{id}/status")
     Call<ApiResponse<OrderResponse>> updateOrderStatus(
@@ -36,4 +39,7 @@ public interface OrderApiService {
             @Path("id") Long id,
             @Header("Authorization") String bearerToken
     );
+
+    @PUT("orders/{id}/cancel-guest")
+    Call<ApiResponse<OrderResponse>> cancelOrderByGuest(@Path("id") Long id);
 }

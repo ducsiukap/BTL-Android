@@ -33,7 +33,9 @@ public class OrderLookupActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private View scrollResult;
     private TextView tvResCode, tvResStatus, tvResItems, tvResTotal;
+    private Button btnCancelOrder;
     private OrderRepository orderRepository;
+    private OrderResponse currentOrder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,9 +53,11 @@ public class OrderLookupActivity extends AppCompatActivity {
         tvResStatus = findViewById(R.id.tvLookupResultStatus);
         tvResItems = findViewById(R.id.tvLookupResultItems);
         tvResTotal = findViewById(R.id.tvLookupResultTotal);
+        btnCancelOrder = findViewById(R.id.btnLookupCancelOrder);
 
         btnBack.setOnClickListener(v -> finish());
         btnSearch.setOnClickListener(v -> performLookup());
+        btnCancelOrder.setOnClickListener(v -> cancelCurrentOrder());
     }
 
     private void performLookup() {
@@ -103,7 +107,40 @@ public class OrderLookupActivity extends AppCompatActivity {
         NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
         tvResTotal.setText(formatter.format(order.getTotalPrice()));
 
+        // Hiện nút hủy nếu trạng thái là PENDING hoặc PREPARING
+        currentOrder = order;
+        if (order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.PREPARING) {
+            btnCancelOrder.setVisibility(View.VISIBLE);
+        } else {
+            btnCancelOrder.setVisibility(View.GONE);
+        }
+
         scrollResult.setVisibility(View.VISIBLE);
+    }
+
+    private void cancelCurrentOrder() {
+        if (currentOrder == null) return;
+        
+        btnCancelOrder.setEnabled(false);
+        orderRepository.cancelOrderGuest(currentOrder.getId())
+            .enqueue(new Callback<ApiResponse<OrderResponse>>() {
+                @Override
+                public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Response<ApiResponse<OrderResponse>> response) {
+                    btnCancelOrder.setEnabled(true);
+                    if (response.isSuccessful()) {
+                        Toast.makeText(OrderLookupActivity.this, "Đã hủy đơn hàng thành công", Toast.LENGTH_SHORT).show();
+                        performLookup(); // Load lại dữ liệu
+                    } else {
+                        Toast.makeText(OrderLookupActivity.this, "Không thể hủy đơn hàng (Mã: " + response.code() + ")", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Throwable t) {
+                    btnCancelOrder.setEnabled(true);
+                    Toast.makeText(OrderLookupActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
     }
 
     private String mapStatusToVietnamese(OrderStatus status) {

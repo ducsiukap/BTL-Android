@@ -39,7 +39,7 @@ public class OrderServiceImpl implements OrderService {
         // 1. Sinh mã đơn hàng
         String code = generateOrderCode();
 
-        // 2. Tạo đối tượng Order cơ bản
+        // 2. Tạo đối tượng Order
         Order order = Order.builder()
                 .code(code)
                 .status(OrderStatus.PENDING)
@@ -55,7 +55,6 @@ public class OrderServiceImpl implements OrderService {
             Product product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found with ID: " + itemReq.productId()));
 
-            // Tính giá snapshot (áp dụng sale off)
             BigDecimal finalPrice = calculateDiscountedPrice(product);
             
             OrderItem orderItem = OrderItem.builder()
@@ -88,11 +87,13 @@ public class OrderServiceImpl implements OrderService {
         return toOrderResponse(order);
     }
 
-
-
     @Override
-    public List<OrderResponse> getStaffQueueOrders() {
-        return orderRepository.findByStatusInOrderByCreatedAtDesc(List.of(OrderStatus.PENDING, OrderStatus.PREPARING))
+    public List<OrderResponse> getStaffQueueOrders(List<OrderStatus> statuses) {
+        if (statuses != null && !statuses.isEmpty()) {
+            return orderRepository.findByStatusInOrderByCreatedAtDesc(statuses)
+                    .stream().map(this::toOrderResponse).collect(Collectors.toList());
+        }
+        return orderRepository.findAllByOrderByCreatedAtDesc()
                 .stream().map(this::toOrderResponse).collect(Collectors.toList());
     }
 
@@ -102,10 +103,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
-        // Logic kiểm tra chuyển đổi trạng thái hợp lệ
         validateStatusTransition(order.getStatus(), status);
-
-        // Lưu nhân viên thực hiện nếu đơn hàng chưa có người xử lý
         if (order.getUser() == null) {
             User staff = userRepository.findById(staffId)
                     .orElseThrow(() -> new ResourceNotFoundException("Staff not found with id: " + staffId));
@@ -131,14 +129,24 @@ public class OrderServiceImpl implements OrderService {
 
         order.setPaid(true);
         order.setPaymentTime(Instant.now());
-        
-        // Khi thanh toán xong, đơn hàng mặc định chuyển sang trạng thái đang làm
         order.setStatus(OrderStatus.PREPARING);
         
         Order savedOrder = orderRepository.save(order);
-        OrderResponse response = toOrderResponse(savedOrder);
+        return toOrderResponse(savedOrder);
+    }
 
-        return response;
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public OrderResponse cancelOrderByGuest(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+
+        // Kiểm tra logic hủy đơn
+        validateStatusTransition(order.getStatus(), OrderStatus.CANCELLED);
+
+        order.setStatus(OrderStatus.CANCELLED);
+        Order savedOrder = orderRepository.save(order);
+        return toOrderResponse(savedOrder);
     }
 
     private void validateStatusTransition(OrderStatus current, OrderStatus target) {
@@ -151,7 +159,6 @@ public class OrderServiceImpl implements OrderService {
 
         switch (target) {
             case PREPARING:
-                // PREPARING thường đến từ PENDING (đã thanh toán)
                 break;
             case READY:
                 if (current != OrderStatus.PREPARING) {
@@ -164,17 +171,17 @@ public class OrderServiceImpl implements OrderService {
                 }
                 break;
             case CANCELLED:
-                // Có thể hủy bất cứ lúc nào miễn là chưa xong
+                if (current != OrderStatus.PENDING && current != OrderStatus.PREPARING) {
+                    throw new IllegalStateException("Không thể hủy đơn hàng khi đã ở trạng thái SẴN SÀNG hoặc HOÀN THÀNH.");
+                }
                 break;
         }
     }
 
-    // Logic sinh mã đơn hàng: OD-YYYYMMDD-xxx
+    // Logic sinh mã đơn hàng
     private String generateOrderCode() {
         LocalDate now = LocalDate.now();
         String datePart = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        
-        // Lấy khoảng thời gian của tháng hiện tại để reset bộ đếm xxx
         YearMonth yearMonth = YearMonth.from(now);
         Instant startOfMonth = yearMonth.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant();

@@ -16,5 +16,7 @@ public interface OrderService {
     
     OrderResponse markAsPaid(Long id);
     
-    List<OrderResponse> getStaffQueueOrders();
+    List<OrderResponse> getStaffQueueOrders(List<OrderStatus> statuses);
+    
+    OrderResponse cancelOrderByGuest(Long id);
 }
