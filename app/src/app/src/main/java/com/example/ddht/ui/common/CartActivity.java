@@ -3,14 +3,21 @@ package com.example.ddht.ui.common;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -110,9 +117,9 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
             public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Response<ApiResponse<OrderResponse>> response) {
                 progressBar.setVisibility(View.GONE);
                 if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
-                    String orderCode = response.body().getData().getCode();
+                    OrderResponse orderResponse = response.body().getData();
                     CartManager.getInstance().clearCart();
-                    showSuccessDialog(orderCode);
+                    showSuccessDialog(orderResponse);
                 } else {
                     String errorMsg = "Đặt hàng thất bại";
                     if (response.code() == 401) errorMsg += ": Bạn cần đăng nhập";
@@ -128,12 +135,30 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
         });
     }
 
-    private void showSuccessDialog(String code) {
-        new AlertDialog.Builder(this)
+    private void showSuccessDialog(OrderResponse order) {
+        String code = order.getCode();
+        String paymentUrl = order.getPaymentUrl();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle("Đặt hàng thành công!")
                 .setMessage(getString(R.string.order_created_success, code))
-                .setCancelable(false)
-                .setNeutralButton(R.string.order_copy_code, (dialog, which) -> {
+                .setCancelable(false);
+
+        if (paymentUrl != null && !paymentUrl.isEmpty()) {
+            // Tạo ImageView để chứa mã QR
+            ImageView qrImageView = new ImageView(this);
+            int padding = (int) (16 * getResources().getDisplayMetrics().density);
+            qrImageView.setPadding(padding, padding, padding, padding);
+            
+            Bitmap qrBitmap = generateQrCode(paymentUrl);
+            if (qrBitmap != null) {
+                qrImageView.setImageBitmap(qrBitmap);
+                builder.setView(qrImageView);
+                builder.setMessage(getString(R.string.order_created_success, code) + "\n\nBạn có thể quét mã QR dưới đây để thanh toán ngay:");
+            }
+        }
+
+        builder.setNeutralButton(R.string.order_copy_code, (dialog, which) -> {
                     ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText("Order Code", code);
                     clipboard.setPrimaryClip(clip);
@@ -142,6 +167,25 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
                 })
                 .setPositiveButton(R.string.common_close, (dialog, which) -> finish())
                 .show();
+    }
+
+    private Bitmap generateQrCode(String data) {
+        QRCodeWriter writer = new QRCodeWriter();
+        try {
+            BitMatrix bitMatrix = writer.encode(data, BarcodeFormat.QR_CODE, 512, 512);
+            int width = bitMatrix.getWidth();
+            int height = bitMatrix.getHeight();
+            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    bmp.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                }
+            }
+            return bmp;
+        } catch (WriterException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @Override

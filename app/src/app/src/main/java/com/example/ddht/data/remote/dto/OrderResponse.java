@@ -22,10 +22,14 @@ public class OrderResponse {
     @SerializedName("items")
     private List<OrderItemResponse> items;
 
+    @SerializedName("paymentUrl")
+    private String paymentUrl;
+
     public Long getId() { return id; }
     public String getCode() { return code; }
     public double getTotalPrice() { return totalPrice; }
     public OrderStatus getStatus() { return status; }
     public boolean isPaid() { return isPaid; }
     public List<OrderItemResponse> getItems() { return items; }
+    public String getPaymentUrl() { return paymentUrl; }
 }
