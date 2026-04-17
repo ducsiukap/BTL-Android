@@ -125,7 +125,7 @@ public class ManagerProductsFragment extends Fragment {
                     return;
                 }
                 Intent intent = new Intent(requireContext(), ProductDetailActivity.class);
-                intent.putExtra(ProductDetailActivity.EXTRA_PRODUCT_ID, product.getId());
+                intent.putExtra(ProductDetailActivity.EXTRA_PRODUCT_ID, product.getId().longValue());
                 startActivity(intent);
             }
 

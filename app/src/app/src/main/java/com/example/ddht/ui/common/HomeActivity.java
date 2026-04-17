@@ -92,7 +92,9 @@ public class HomeActivity extends AppCompatActivity {
         }
         productAdapter = new ProductAdapter(new ArrayList<>(), product -> {
             Intent intent = new Intent(HomeActivity.this, ProductDetailActivity.class);
-            intent.putExtra(ProductDetailActivity.EXTRA_PRODUCT_ID, product.getId());
+            if (product.getId() != null) {
+                intent.putExtra(ProductDetailActivity.EXTRA_PRODUCT_ID, product.getId().longValue());
+            }
             startActivity(intent);
         });
         rvProducts.setAdapter(productAdapter);

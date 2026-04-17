@@ -28,6 +28,7 @@ public class CartManager {
                 return;
             }
         }
+        System.out.println("product to add to cart: " + product.getId());
         cartItems.add(new CartItem(product, quantity));
     }
 

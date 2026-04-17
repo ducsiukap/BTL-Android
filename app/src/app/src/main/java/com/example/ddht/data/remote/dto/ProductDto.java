@@ -1,14 +1,21 @@
 package com.example.ddht.data.remote.dto;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class ProductDto {
     private Long id;
     private String name;
     private String description;
+
+    @SerializedName("selling")
     private Boolean isSelling;
+
     private Double originalPrice;
+
+    @SerializedName("saleOff")
     private Boolean isSaleOff;
+
     private Double discountedPrice;
     private List<ProductImageDto> images;
 
