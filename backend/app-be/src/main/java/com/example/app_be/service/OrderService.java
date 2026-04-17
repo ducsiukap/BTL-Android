@@ -12,13 +12,9 @@ public interface OrderService {
     
     OrderResponse getOrderByCode(String code);
     
-    List<OrderResponse> getOrdersByStatus(OrderStatus status);
-    
-    OrderResponse updateStatus(Long id, OrderStatus status);
+    OrderResponse updateStatus(Long id, OrderStatus status, UUID staffId);
     
     OrderResponse markAsPaid(Long id);
     
     List<OrderResponse> getStaffQueueOrders();
-
-    OrderResponse assignStaff(Long id, UUID staffId);
 }
