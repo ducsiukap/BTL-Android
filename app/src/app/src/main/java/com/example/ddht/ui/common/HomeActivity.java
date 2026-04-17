@@ -45,6 +45,7 @@ import com.example.ddht.ui.manager.ProductDetailActivity;
 import com.example.ddht.utils.SessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +71,11 @@ public class HomeActivity extends AppCompatActivity {
     // Order (Staff)
     private OrderRepository orderRepository;
     private StaffOrderAdapter staffOrderAdapter;
+    private Button btnOrderFilter;
+    private final List<String> selectedStatuses = new ArrayList<>();
+    private final String[] statusLabels = {"Chờ xử lý", "Đang nấu", "Sẵn sàng", "Hoàn thành", "Đã hủy"};
+    private final String[] statusValues = {"PENDING", "PREPARING", "READY", "COMPLETED", "CANCELLED"};
+    private final boolean[] checkedItems = {false, false, false, false, false};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +96,7 @@ public class HomeActivity extends AppCompatActivity {
         TextView tvWelcome = findViewById(R.id.tvWelcome);
         tvProductsError = findViewById(R.id.tvProductsError);
         layoutCatalogFilters = findViewById(R.id.layoutCatalogFilters);
+        btnOrderFilter = findViewById(R.id.btnOrderFilter);
         LinearLayout layoutProducts = findViewById(R.id.layoutHomeProducts);
         android.widget.FrameLayout layoutAccount = findViewById(R.id.layoutHomeAccount);
         LinearLayout layoutOrders = findViewById(R.id.layoutHomeOrders);
@@ -198,6 +205,9 @@ public class HomeActivity extends AppCompatActivity {
 
         loadCatalogs();
         loadProducts(currentQuery);
+        if (btnOrderFilter != null) {
+            btnOrderFilter.setOnClickListener(v -> showMultiSelectFilterDialog());
+        }
     }
 
     private void showChatBotDialog() {
@@ -319,7 +329,7 @@ public class HomeActivity extends AppCompatActivity {
         if (staffOrderAdapter == null) return;
         
         String token = "Bearer " + sessionManager.getAccessToken();
-        orderRepository.getStaffQueueOrders(token).enqueue(new Callback<ApiResponse<List<OrderResponse>>>() {
+        orderRepository.getStaffQueueOrders(token, selectedStatuses).enqueue(new Callback<ApiResponse<List<OrderResponse>>>() {
             @Override
             public void onResponse(@NonNull Call<ApiResponse<List<OrderResponse>>> call, 
                                    @NonNull Response<ApiResponse<List<OrderResponse>>> response) {
@@ -333,6 +343,45 @@ public class HomeActivity extends AppCompatActivity {
                 Toast.makeText(HomeActivity.this, "Lỗi tải đơn hàng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void showMultiSelectFilterDialog() {
+        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        builder.setTitle("Chọn trạng thái đơn hàng");
+        builder.setMultiChoiceItems(statusLabels, checkedItems, (dialog, which, isChecked) -> {
+            checkedItems[which] = isChecked;
+        });
+
+        builder.setPositiveButton("Áp dụng", (dialog, which) -> {
+            selectedStatuses.clear();
+            int count = 0;
+            for (int i = 0; i < checkedItems.length; i++) {
+                if (checkedItems[i]) {
+                    selectedStatuses.add(statusValues[i]);
+                    count++;
+                }
+            }
+            
+            if (count == 0 || count == statusValues.length) {
+                btnOrderFilter.setText("Lọc: Tất cả");
+            } else {
+                btnOrderFilter.setText("Lọc (" + count + ")");
+            }
+            
+            loadStaffOrders();
+        });
+
+        builder.setNegativeButton("Hủy", null);
+        builder.setNeutralButton("Xóa bộ lọc", (dialog, which) -> {
+            for (int i = 0; i < checkedItems.length; i++) {
+                checkedItems[i] = false;
+            }
+            selectedStatuses.clear();
+            btnOrderFilter.setText("Lọc: Tất cả");
+            loadStaffOrders();
+        });
+        
+        builder.create().show();
     }
 
     private void updateStaffOrderStatus(Long orderId, String status) {
@@ -491,6 +540,7 @@ public class HomeActivity extends AppCompatActivity {
 
         layoutCatalogFilters.addView(chip);
     }
+
 
     private static class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
         private final int spanCount;

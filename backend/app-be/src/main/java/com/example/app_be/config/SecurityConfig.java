@@ -36,7 +36,8 @@ public class SecurityConfig {
                                                                                 "/api/v1/users/no-auth",
                                                                                 "/api/v1/orders",
                                                                                 "/api/v1/orders/*",
-                                                                                "/ws-order/**"
+                                                                                "/ws-order/**",
+                                                                                "/api/v1/orders/*/cancel-guest"
                                                                 // ,"/api/v1/users"
                                                                 ).permitAll()
                                                                 .requestMatchers(HttpMethod.GET,

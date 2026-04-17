@@ -73,9 +73,15 @@ public class StaffOrderAdapter extends RecyclerView.Adapter<StaffOrderAdapter.St
             });
         } else if (order.getStatus() == OrderStatus.PREPARING) {
             holder.btnAction.setVisibility(View.VISIBLE);
-            holder.btnAction.setText("Xong -> Mời nhận đồ");
+            holder.btnAction.setText("Sẵn sàng");
             holder.btnAction.setOnClickListener(v -> {
                 if (listener != null) listener.onUpdateStatus(order, OrderStatus.READY);
+            });
+        } else if (order.getStatus() == OrderStatus.READY) {
+            holder.btnAction.setVisibility(View.VISIBLE);
+            holder.btnAction.setText("Hoàn thành");
+            holder.btnAction.setOnClickListener(v -> {
+                if (listener != null) listener.onUpdateStatus(order, OrderStatus.COMPLETED);
             });
         } else {
             holder.btnAction.setVisibility(View.GONE);

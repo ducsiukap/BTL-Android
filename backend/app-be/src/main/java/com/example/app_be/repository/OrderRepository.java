@@ -11,12 +11,12 @@ import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
-    List<Order> findByStatus(OrderStatus status);
+    List<Order> findByStatusOrderByCreatedAtDesc(OrderStatus status);
 
     List<Order> findByStatusInOrderByCreatedAtDesc(List<OrderStatus> statuses);
 
-    // Đếm số lượng đơn hàng được tạo trong khoảng thời gian
-    // Dùng để reset bộ đếm xxx theo tháng
+    List<Order> findAllByOrderByCreatedAtDesc();
+
     long countByCreatedAtBetween(Instant start, Instant end);
 
     Optional<Order> findByCodeContainingIgnoreCase(String code);

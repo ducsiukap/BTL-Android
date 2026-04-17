@@ -24,8 +24,8 @@ public class OrderRepository {
         return orderApiService.getOrderByCode(code);
     }
 
-    public Call<ApiResponse<List<OrderResponse>>> getStaffQueueOrders(String token) {
-        return orderApiService.getStaffQueueOrders(token);
+    public Call<ApiResponse<List<OrderResponse>>> getStaffQueueOrders(String token, List<String> statuses) {
+        return orderApiService.getStaffQueueOrders(token, statuses);
     }
 
     public Call<ApiResponse<OrderResponse>> updateOrderStatus(Long id, String status, String token) {
@@ -34,5 +34,9 @@ public class OrderRepository {
 
     public Call<ApiResponse<OrderResponse>> markAsPaid(Long id, String token) {
         return orderApiService.markAsPaid(id, token);
+    }
+
+    public Call<ApiResponse<OrderResponse>> cancelOrderGuest(Long id) {
+        return orderApiService.cancelOrderByGuest(id);
     }
 }
