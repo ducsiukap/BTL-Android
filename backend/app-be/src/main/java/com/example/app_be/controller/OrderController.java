@@ -34,11 +34,6 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(orderService.getOrderByCode(code)));
     }
 
-    @GetMapping("/pending")
-    public ResponseEntity<ApiResponse<List<OrderResponse>>> getPendingOrders() {
-        return ResponseEntity.ok(ApiResponse.success(orderService.getOrdersByStatus(OrderStatus.PENDING)));
-    }
-
     @GetMapping("/staff-queue")
     public ResponseEntity<ApiResponse<List<OrderResponse>>> getStaffQueueOrders() {
         return ResponseEntity.ok(ApiResponse.success(orderService.getStaffQueueOrders()));
@@ -53,14 +48,11 @@ public class OrderController {
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<OrderResponse>> updateStatus(
             @PathVariable Long id,
-            @RequestParam OrderStatus status) {
-        return ResponseEntity.ok(ApiResponse.success(orderService.updateStatus(id, status)));
+            @RequestParam OrderStatus status,
+            @AuthenticationPrincipal User currentUser
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(orderService.updateStatus(id, status, currentUser.getId())));
     }
 
-    @PutMapping("/{id}/assign")
-    public ResponseEntity<ApiResponse<OrderResponse>> assignMe(
-            @PathVariable Long id,
-            @AuthenticationPrincipal User currentUser) {
-        return ResponseEntity.ok(ApiResponse.success(orderService.assignStaff(id, currentUser.getId())));
-    }
+
 }
