@@ -34,6 +34,12 @@ app:
       secret: ${JWT_SECRET:B1AFoI/GoJbfavxVh8G6G3GLZz/du9Oco2GGlhDGxQE=}
       expiration_seconds: ${JWT_EXPIRATION:28800}
     default_password: ${DEFAULT_PASSWORD:12345678}
+  vnpay:
+    tmn_code: ${VNP_TMN_CODE:2QX1Y6YW}
+    hash_secret: ${VNP_HASH_SECRET:BWSSTJCJCXUKZJFLEHUEVRIFSYNYYUCQ}
+    url: ${VNP_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+    return_url: ${VNP_RETURN_URL:http://localhost:3333/api/v1/payments/vnpay-callback}
+    ipn_url: ${VNP_IPN_URL:http://localhost:3333/api/v1/payments/vnpay-ipn}
 
 logging:
   level:
