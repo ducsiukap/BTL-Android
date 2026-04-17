@@ -4,19 +4,28 @@ import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class ProductDto {
+    @SerializedName("id")
     private Long id;
+
+    @SerializedName("name")
     private String name;
+
+    @SerializedName("description")
     private String description;
 
     @SerializedName("selling")
     private Boolean isSelling;
 
+    @SerializedName("originalPrice")
     private Double originalPrice;
 
     @SerializedName("saleOff")
     private Boolean isSaleOff;
 
+    @SerializedName("discountedPrice")
     private Double discountedPrice;
+
+    @SerializedName("images")
     private List<ProductImageDto> images;
 
     public Long getId() {

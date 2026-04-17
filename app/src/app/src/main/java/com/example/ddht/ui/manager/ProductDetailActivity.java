@@ -56,7 +56,8 @@ import retrofit2.Response;
 public class ProductDetailActivity extends AppCompatActivity {
     public static final String EXTRA_PRODUCT_ID = "extra_product_id";
     private static final int MAX_PRODUCT_IMAGES = 3;
-    private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.getDefault());
+    private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm",
+            Locale.getDefault());
 
     private ProductRepository productRepository;
     private SessionManager sessionManager;
@@ -133,7 +134,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         // Role-based visibility logic
         String role = sessionManager.getUserRole();
         boolean isStaffOrManager = role != null && (role.equalsIgnoreCase("MANAGER") || role.equalsIgnoreCase("STAFF"));
-        
+
         // For demo: if not logged in or is custom client, show shopping, hide manager
         if (isStaffOrManager) {
             layoutManagerActions.setVisibility(View.VISIBLE);
@@ -147,7 +148,8 @@ public class ProductDetailActivity extends AppCompatActivity {
             switchSelling.setVisibility(View.GONE);
         }
 
-        pickDetailImagesLauncher = registerForActivityResult(new ActivityResultContracts.GetMultipleContents(), this::handlePickedDetailImages);
+        pickDetailImagesLauncher = registerForActivityResult(new ActivityResultContracts.GetMultipleContents(),
+                this::handlePickedDetailImages);
 
         imagePagerAdapter = new ProductImagePagerAdapter();
         vpImages.setAdapter(imagePagerAdapter);
@@ -159,7 +161,8 @@ public class ProductDetailActivity extends AppCompatActivity {
                 if (total <= 1) {
                     tvImageIndicator.setText("");
                 } else {
-                    tvImageIndicator.setText(getString(R.string.manager_product_image_pager_indicator, position + 1, total));
+                    tvImageIndicator
+                            .setText(getString(R.string.manager_product_image_pager_indicator, position + 1, total));
                 }
             }
         });
@@ -171,8 +174,9 @@ public class ProductDetailActivity extends AppCompatActivity {
             return;
         }
 
+        System.out.println("ProductDetailActivity - Loading productId " + productId);
         btnBack.setOnClickListener(v -> finish());
-        
+
         // Shopping logic
         btnQtyMinus.setOnClickListener(v -> {
             if (selectedQuantity > 1) {
@@ -195,21 +199,25 @@ public class ProductDetailActivity extends AppCompatActivity {
             if (bindingSwitch || currentProduct == null) {
                 return;
             }
-            updateProduct(currentProduct.getName(), currentProduct.getDescription(), currentProduct.getOriginalPrice(), isChecked, false);
+            updateProduct(currentProduct.getName(), currentProduct.getDescription(), currentProduct.getOriginalPrice(),
+                    isChecked, false);
         });
 
         loadProduct();
     }
 
     private void addToCart() {
-        if (currentProduct == null) return;
-        
+        if (currentProduct == null)
+            return;
+
         // Convert ProductDto to Product model
         double originalPrice = currentProduct.getOriginalPrice() == null ? 0 : currentProduct.getOriginalPrice();
-        double displayPrice = currentProduct.getDiscountedPrice() == null ? originalPrice : currentProduct.getDiscountedPrice();
-        String imageUrl = (currentProduct.getImages() != null && !currentProduct.getImages().isEmpty()) 
-                ? currentProduct.getImages().get(0).getUrl() : null;
-        
+        double displayPrice = currentProduct.getDiscountedPrice() == null ? originalPrice
+                : currentProduct.getDiscountedPrice();
+        String imageUrl = (currentProduct.getImages() != null && !currentProduct.getImages().isEmpty())
+                ? currentProduct.getImages().get(0).getUrl()
+                : null;
+
         com.example.ddht.data.model.Product modelProduct = new com.example.ddht.data.model.Product(
                 currentProduct.getId(),
                 currentProduct.getName(),
@@ -217,40 +225,46 @@ public class ProductDetailActivity extends AppCompatActivity {
                 displayPrice,
                 originalPrice,
                 Boolean.TRUE.equals(currentProduct.getSaleOff()),
-                imageUrl
-        );
-        
+                imageUrl);
+
         com.example.ddht.data.manager.CartManager.getInstance().addProduct(modelProduct, selectedQuantity);
-        Toast.makeText(this, "Đã thêm " + selectedQuantity + " " + modelProduct.getName() + " vào giỏ hàng", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Đã thêm " + selectedQuantity + " " + modelProduct.getName() + " vào giỏ hàng",
+                Toast.LENGTH_SHORT).show();
         finish();
     }
 
     private void loadProduct() {
         setLoading(true);
         clearError();
+        System.out.println("Calling productRepository.getProductById with ID " + productId);
         productRepository.getProductById(productId).enqueue(new Callback<ApiResponse<ProductDto>>() {
             @Override
             public void onResponse(@NonNull Call<ApiResponse<ProductDto>> call,
-                                   @NonNull Response<ApiResponse<ProductDto>> response) {
+                    @NonNull Response<ApiResponse<ProductDto>> response) {
                 setLoading(false);
+                System.out.println(
+                        "Product load API response: " + response.code() + ", isSuccessful: " + response.isSuccessful());
                 if (!response.isSuccessful() || response.body() == null || response.body().getData() == null) {
                     showError(getString(R.string.manager_product_detail_load_failed));
                     return;
                 }
                 currentProduct = response.body().getData();
+                System.out.println("Product loaded successfully " + currentProduct.getName());
                 bindProduct(currentProduct);
             }
 
             @Override
             public void onFailure(@NonNull Call<ApiResponse<ProductDto>> call, @NonNull Throwable throwable) {
                 setLoading(false);
+                System.out.println("Product load API error: " + throwable.getMessage());
                 showError(getString(R.string.network_error, throwable.getMessage()));
             }
         });
     }
 
     private void bindProduct(ProductDto product) {
-        String name = TextUtils.isEmpty(product.getName()) ? getString(R.string.manager_product_default_name) : product.getName();
+        String name = TextUtils.isEmpty(product.getName()) ? getString(R.string.manager_product_default_name)
+                : product.getName();
         String description = TextUtils.isEmpty(product.getDescription())
                 ? getString(R.string.manager_product_no_description)
                 : product.getDescription();
@@ -262,7 +276,8 @@ public class ProductDetailActivity extends AppCompatActivity {
         tvName.setText(name);
         tvDescription.setText(description);
         tvOriginalPrice.setText(getString(R.string.manager_product_original_price, formatter.format(originalPrice)));
-        tvDiscountedPrice.setText(getString(R.string.manager_product_discounted_price, formatter.format(discountedPrice)));
+        tvDiscountedPrice
+                .setText(getString(R.string.manager_product_discounted_price, formatter.format(discountedPrice)));
         tvOriginalPrice.setTextColor(getColor(R.color.brand_text_primary));
 
         boolean hasSale = Boolean.TRUE.equals(product.getSaleOff()) && discountedPrice < originalPrice;
@@ -334,7 +349,8 @@ public class ProductDetailActivity extends AppCompatActivity {
         manageImagesAddDefaultText = btnManageImagesAdd.getText();
         btnManageImagesAdd.setOnClickListener(v -> {
             if (manageImages.size() >= MAX_PRODUCT_IMAGES) {
-                Toast.makeText(this, getString(R.string.manager_product_image_limit_reached, MAX_PRODUCT_IMAGES), Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.manager_product_image_limit_reached, MAX_PRODUCT_IMAGES),
+                        Toast.LENGTH_SHORT).show();
                 return;
             }
             pickDetailImagesLauncher.launch("image/*");
@@ -376,10 +392,11 @@ public class ProductDetailActivity extends AppCompatActivity {
                 .enqueue(new Callback<ApiResponse<ProductDto>>() {
                     @Override
                     public void onResponse(@NonNull Call<ApiResponse<ProductDto>> call,
-                                           @NonNull Response<ApiResponse<ProductDto>> response) {
+                            @NonNull Response<ApiResponse<ProductDto>> response) {
                         setLoading(false);
                         if (response.isSuccessful()) {
-                            Toast.makeText(ProductDetailActivity.this, R.string.manager_product_image_delete_success, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ProductDetailActivity.this, R.string.manager_product_image_delete_success,
+                                    Toast.LENGTH_SHORT).show();
                             if (response.body() != null && response.body().getData() != null) {
                                 currentProduct = response.body().getData();
                                 bindProduct(currentProduct);
@@ -408,7 +425,8 @@ public class ProductDetailActivity extends AppCompatActivity {
         int currentCount = getValidImages(currentProduct).size();
         int remaining = MAX_PRODUCT_IMAGES - currentCount;
         if (remaining <= 0) {
-            Toast.makeText(this, getString(R.string.manager_product_image_limit_reached, MAX_PRODUCT_IMAGES), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.manager_product_image_limit_reached, MAX_PRODUCT_IMAGES),
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -423,7 +441,8 @@ public class ProductDetailActivity extends AppCompatActivity {
             }
         }
         if (uris.size() > accepted.size()) {
-            Toast.makeText(this, getString(R.string.manager_product_image_limit_reached, MAX_PRODUCT_IMAGES), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.manager_product_image_limit_reached, MAX_PRODUCT_IMAGES),
+                    Toast.LENGTH_SHORT).show();
         }
 
         List<MultipartBody.Part> imageParts = buildImageParts(accepted);
@@ -446,10 +465,11 @@ public class ProductDetailActivity extends AppCompatActivity {
                 .enqueue(new Callback<ApiResponse<ProductDto>>() {
                     @Override
                     public void onResponse(@NonNull Call<ApiResponse<ProductDto>> call,
-                                           @NonNull Response<ApiResponse<ProductDto>> response) {
+                            @NonNull Response<ApiResponse<ProductDto>> response) {
                         setManageImagesAddLoading(false);
                         if (response.isSuccessful()) {
-                            Toast.makeText(ProductDetailActivity.this, R.string.manager_product_image_upload_success, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ProductDetailActivity.this, R.string.manager_product_image_upload_success,
+                                    Toast.LENGTH_SHORT).show();
                             if (response.body() != null && response.body().getData() != null) {
                                 currentProduct = response.body().getData();
                                 bindProduct(currentProduct);
@@ -478,7 +498,8 @@ public class ProductDetailActivity extends AppCompatActivity {
         btnManageImagesAdd.setEnabled(!loading);
         btnManageImagesAdd.setText(loading
                 ? getString(R.string.manager_product_image_uploading)
-                : (manageImagesAddDefaultText == null ? getString(R.string.manager_product_image_add) : manageImagesAddDefaultText));
+                : (manageImagesAddDefaultText == null ? getString(R.string.manager_product_image_add)
+                        : manageImagesAddDefaultText));
     }
 
     private List<ProductImageDto> getValidImages(ProductDto product) {
@@ -511,8 +532,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         tvManageImagesHint.setText(getString(
                 R.string.manager_product_selected_images_count,
                 manageImages.size(),
-                MAX_PRODUCT_IMAGES
-        ));
+                MAX_PRODUCT_IMAGES));
     }
 
     private List<MultipartBody.Part> buildImageParts(List<Uri> uris) {
@@ -523,14 +543,15 @@ public class ProductDetailActivity extends AppCompatActivity {
                 continue;
             }
             RequestBody body = RequestBody.create(MediaType.parse("image/*"), bytes);
-            parts.add(MultipartBody.Part.createFormData("images", "product_detail_" + System.currentTimeMillis() + "_" + i + ".jpg", body));
+            parts.add(MultipartBody.Part.createFormData("images",
+                    "product_detail_" + System.currentTimeMillis() + "_" + i + ".jpg", body));
         }
         return parts;
     }
 
     private byte[] readBytes(Uri uri) {
         try (InputStream inputStream = getContentResolver().openInputStream(uri);
-             ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             if (inputStream == null) {
                 return null;
             }
@@ -578,7 +599,8 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         edtName.setText(currentProduct.getName());
         edtDescription.setText(currentProduct.getDescription());
-        edtPrice.setText(String.valueOf(currentProduct.getOriginalPrice() == null ? 0 : currentProduct.getOriginalPrice()));
+        edtPrice.setText(
+                String.valueOf(currentProduct.getOriginalPrice() == null ? 0 : currentProduct.getOriginalPrice()));
         switchFormSelling.setChecked(currentProduct.getSelling() == null || currentProduct.getSelling());
 
         AlertDialog dialog = new AlertDialog.Builder(this)
@@ -598,7 +620,8 @@ public class ProductDetailActivity extends AppCompatActivity {
             Double price = parseDouble(rawPrice);
 
             if (TextUtils.isEmpty(name)) {
-                tilName.setError(getString(R.string.error_required_field, getString(R.string.manager_product_name_hint)));
+                tilName.setError(
+                        getString(R.string.error_required_field, getString(R.string.manager_product_name_hint)));
                 return;
             }
             if (price == null || price <= 0) {
@@ -638,10 +661,12 @@ public class ProductDetailActivity extends AppCompatActivity {
         clearError();
         productRepository.deleteProduct(productId, token).enqueue(new Callback<ApiResponse<Void>>() {
             @Override
-            public void onResponse(@NonNull Call<ApiResponse<Void>> call, @NonNull Response<ApiResponse<Void>> response) {
+            public void onResponse(@NonNull Call<ApiResponse<Void>> call,
+                    @NonNull Response<ApiResponse<Void>> response) {
                 setLoading(false);
                 if (response.isSuccessful()) {
-                    Toast.makeText(ProductDetailActivity.this, R.string.manager_product_delete_success, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ProductDetailActivity.this, R.string.manager_product_delete_success,
+                            Toast.LENGTH_SHORT).show();
                     setResult(RESULT_OK);
                     finish();
                 } else {
@@ -670,7 +695,7 @@ public class ProductDetailActivity extends AppCompatActivity {
                 .enqueue(new Callback<ApiResponse<ProductDto>>() {
                     @Override
                     public void onResponse(@NonNull Call<ApiResponse<ProductDto>> call,
-                                           @NonNull Response<ApiResponse<ProductDto>> response) {
+                            @NonNull Response<ApiResponse<ProductDto>> response) {
                         setLoading(false);
                         if (!response.isSuccessful() || response.body() == null || response.body().getData() == null) {
                             showError(getString(R.string.manager_product_update_failed));
@@ -680,7 +705,8 @@ public class ProductDetailActivity extends AppCompatActivity {
                         currentProduct = response.body().getData();
                         bindProduct(currentProduct);
                         if (showToast) {
-                            Toast.makeText(ProductDetailActivity.this, R.string.manager_product_update_success, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ProductDetailActivity.this, R.string.manager_product_update_success,
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
 
@@ -732,7 +758,8 @@ public class ProductDetailActivity extends AppCompatActivity {
                 return;
             }
             if (TextUtils.isEmpty(startDate)) {
-                tilStartDate.setError(getString(R.string.error_required_field, getString(R.string.manager_saleoff_start_hint)));
+                tilStartDate.setError(
+                        getString(R.string.error_required_field, getString(R.string.manager_saleoff_start_hint)));
                 return;
             }
 
@@ -756,10 +783,11 @@ public class ProductDetailActivity extends AppCompatActivity {
                 .enqueue(new Callback<ApiResponse<com.example.ddht.data.remote.dto.SaleOffDto>>() {
                     @Override
                     public void onResponse(@NonNull Call<ApiResponse<com.example.ddht.data.remote.dto.SaleOffDto>> call,
-                                           @NonNull Response<ApiResponse<com.example.ddht.data.remote.dto.SaleOffDto>> response) {
+                            @NonNull Response<ApiResponse<com.example.ddht.data.remote.dto.SaleOffDto>> response) {
                         setLoading(false);
                         if (response.isSuccessful()) {
-                            Toast.makeText(ProductDetailActivity.this, R.string.manager_product_add_saleoff_success, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(ProductDetailActivity.this, R.string.manager_product_add_saleoff_success,
+                                    Toast.LENGTH_SHORT).show();
                             loadProduct();
                         } else {
                             showError(getString(R.string.manager_product_add_saleoff_failed));
@@ -767,7 +795,8 @@ public class ProductDetailActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onFailure(@NonNull Call<ApiResponse<com.example.ddht.data.remote.dto.SaleOffDto>> call, @NonNull Throwable throwable) {
+                    public void onFailure(@NonNull Call<ApiResponse<com.example.ddht.data.remote.dto.SaleOffDto>> call,
+                            @NonNull Throwable throwable) {
                         setLoading(false);
                         showError(getString(R.string.network_error, throwable.getMessage()));
                     }
@@ -791,20 +820,19 @@ public class ProductDetailActivity extends AppCompatActivity {
                     TimePickerDialog timeDialog = new TimePickerDialog(
                             this,
                             (timeView, hourOfDay, minute) -> {
-                                LocalDateTime selected = LocalDateTime.of(year, month + 1, dayOfMonth, hourOfDay, minute);
+                                LocalDateTime selected = LocalDateTime.of(year, month + 1, dayOfMonth, hourOfDay,
+                                        minute);
                                 target.setText(DISPLAY_FORMATTER.format(selected));
                                 target.setTag(toIsoUtc(selected));
                             },
                             seed.getHour(),
                             seed.getMinute(),
-                            true
-                    );
+                            true);
                     timeDialog.show();
                 },
                 seed.getYear(),
                 seed.getMonthValue() - 1,
-                seed.getDayOfMonth()
-        );
+                seed.getDayOfMonth());
         dateDialog.show();
     }
 

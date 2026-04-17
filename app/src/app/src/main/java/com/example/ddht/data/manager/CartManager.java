@@ -5,6 +5,7 @@ import com.example.ddht.data.model.Product;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class CartManager {
     private static CartManager instance;
@@ -22,13 +23,14 @@ public class CartManager {
     }
 
     public void addProduct(Product product, int quantity) {
+        if (product == null || product.getId() == null) return;
+
         for (CartItem item : cartItems) {
-            if (item.getProduct().getId().equals(product.getId())) {
+            if (Objects.equals(item.getProduct().getId(), product.getId())) {
                 item.setQuantity(item.getQuantity() + quantity);
                 return;
             }
         }
-        System.out.println("product to add to cart: " + product.getId());
         cartItems.add(new CartItem(product, quantity));
     }
 
@@ -37,12 +39,12 @@ public class CartManager {
     }
 
     public void removeProduct(Long productId) {
-        cartItems.removeIf(item -> item.getProduct().getId().equals(productId));
+        cartItems.removeIf(item -> Objects.equals(item.getProduct().getId(), productId));
     }
 
     public void updateQuantity(Long productId, int quantity) {
         for (CartItem item : cartItems) {
-            if (item.getProduct().getId().equals(productId)) {
+            if (Objects.equals(item.getProduct().getId(), productId)) {
                 item.setQuantity(quantity);
                 if (item.getQuantity() <= 0) {
                     removeProduct(productId);

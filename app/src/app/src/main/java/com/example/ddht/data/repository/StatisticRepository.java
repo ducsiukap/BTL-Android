@@ -23,37 +23,43 @@ public class StatisticRepository {
         statisticApi = NetworkClient.getRetrofit().create(StatisticApi.class);
     }
 
-    public Call<ApiResponse<StatisticOverviewResponse>> getStatisticOverview(String bearerToken, Instant from,
-            Instant to) {
-        return statisticApi.getStatisticOverview(bearerToken, from, to);
+    private String formatToken(String token) {
+        if (token == null) return null;
+        if (token.startsWith("Bearer ")) return token;
+        return "Bearer " + token;
     }
 
-    public Call<ApiResponse<List<TimeSeriesPointResponse>>> getRevenueSeries(String bearerToken, Instant from,
+    public Call<ApiResponse<StatisticOverviewResponse>> getStatisticOverview(String token, Instant from,
+            Instant to) {
+        return statisticApi.getStatisticOverview(formatToken(token), from, to);
+    }
+
+    public Call<ApiResponse<List<TimeSeriesPointResponse>>> getRevenueSeries(String token, Instant from,
             Instant to, String groupBy) {
-        return statisticApi.getRevenueSeries("Bearer " + bearerToken, from, to, groupBy);
+        return statisticApi.getRevenueSeries(formatToken(token), from, to, groupBy);
     }
 
-    public Call<ApiResponse<List<TimeSeriesPointResponse>>> getOrderSeries(String bearerToken, Instant from, Instant to,
+    public Call<ApiResponse<List<TimeSeriesPointResponse>>> getOrderSeries(String token, Instant from, Instant to,
             String groupBy) {
-        return statisticApi.getOrderSeries(bearerToken, from, to, groupBy);
+        return statisticApi.getOrderSeries(formatToken(token), from, to, groupBy);
     }
 
-    public Call<ApiResponse<List<ProductStatisticResponse>>> getTopProducts(String bearerToken, Instant from,
-            Instant to, Integer limit) {
-        return statisticApi.getTopProducts(bearerToken, from, to, limit);
+    public Call<ApiResponse<List<ProductStatisticResponse>>> getTopProducts(String token, Instant from,
+            Instant to, Integer limit, String sortBy) {
+        return statisticApi.getTopProducts(formatToken(token), from, to, limit, sortBy);
     }
 
-    public Call<ApiResponse<List<CatalogStatisticResponse>>> getByCatalog(String bearerToken, Instant from,
+    public Call<ApiResponse<List<CatalogStatisticResponse>>> getByCatalog(String token, Instant from,
             Instant to) {
-        return statisticApi.getByCatalog(bearerToken, from, to);
+        return statisticApi.getByCatalog(formatToken(token), from, to);
     }
 
-    public Call<ApiResponse<List<StaffStatisticResponse>>> getByStaff(String bearerToken, Instant from, Instant to) {
-        return statisticApi.getByStaff(bearerToken, from, to);
+    public Call<ApiResponse<List<StaffStatisticResponse>>> getByStaff(String token, Instant from, Instant to) {
+        return statisticApi.getByStaff(formatToken(token), from, to);
     }
 
-    public Call<ApiResponse<List<StatusStatisticResponse>>> getStatusDistribution(String bearerToken, Instant from,
+    public Call<ApiResponse<List<StatusStatisticResponse>>> getStatusDistribution(String token, Instant from,
             Instant to) {
-        return statisticApi.getStatusDistribution(bearerToken, from, to);
+        return statisticApi.getStatusDistribution(formatToken(token), from, to);
     }
 }

@@ -34,55 +34,62 @@ public class StatisticController {
 
      @GetMapping("/overview")
      public ResponseEntity<ApiResponse<StatisticOverViewResponse>> getOverview(
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+               @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+               @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+          System.out.println("statistic overview");
           return ResponseEntity.ok().body(ApiResponse.success(statisticService.getOverView(from, to)));
      }
 
      @GetMapping("/revenue-series")
      public ResponseEntity<ApiResponse<List<TimeSeriesPointResponse>>> getRevenueSeries(
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
-               @RequestParam(defaultValue = "MONTH") StatisticGroupBy groupBy) {
+               @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+               @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+               @RequestParam(name = "groupBy", defaultValue = "MONTH") StatisticGroupBy groupBy) {
+          System.out.println("revenue-series");
           return ResponseEntity.ok().body(ApiResponse.success(statisticService.getRevenueSeries(from, to, groupBy)));
      }
 
      @GetMapping("/order-series")
      public ResponseEntity<ApiResponse<List<TimeSeriesPointResponse>>> getOrderSeries(
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+               @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+               @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
                @RequestParam(defaultValue = "MONTH") StatisticGroupBy groupBy) {
+          System.out.println("order-series");
           return ResponseEntity.ok().body(ApiResponse.success(statisticService.getOrderSeries(from, to, groupBy)));
      }
 
      @GetMapping("/top-products")
      public ResponseEntity<ApiResponse<List<ProductStatisticResponse>>> getTopProducts(
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
-               @RequestParam(defaultValue = "10") int limit,
-               @RequestParam(defaultValue = "REVENUE") ProductStatisticSortBy sortBy) {
+               @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+               @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+               @RequestParam(name = "limit", defaultValue = "10") int limit,
+               @RequestParam(name = "sortBy", defaultValue = "REVENUE") ProductStatisticSortBy sortBy) {
+          System.out.println("top-products");
           return ResponseEntity.ok()
                     .body(ApiResponse.success(statisticService.getTopProducts(from, to, limit, sortBy)));
      }
 
      @GetMapping("/by-catalog")
      public ResponseEntity<ApiResponse<List<CatalogStatisticResponse>>> getByCatalog(
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+               @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+               @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+          System.out.println("by-catalog");
           return ResponseEntity.ok().body(ApiResponse.success(statisticService.getCatalogStatistics(from, to)));
      }
 
      @GetMapping("/by-staff")
      public ResponseEntity<ApiResponse<List<StaffStatisticResponse>>> getByStaff(
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+               @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+               @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+          System.out.println("by-staff");
           return ResponseEntity.ok().body(ApiResponse.success(statisticService.getStaffStatistics(from, to)));
      }
 
      @GetMapping("/status-distribution")
      public ResponseEntity<ApiResponse<List<StatusStatisticResponse>>> getstatusDistribution(
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
-               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+               @RequestParam("from") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+               @RequestParam("to") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to) {
+          System.out.println("status-distribution");
           return ResponseEntity.ok().body(ApiResponse.success(statisticService.getStatusDistribution(from, to)));
      }
 }

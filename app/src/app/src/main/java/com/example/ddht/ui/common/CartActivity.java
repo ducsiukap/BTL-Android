@@ -27,6 +27,7 @@ import com.example.ddht.data.remote.dto.OrderItemRequest;
 import com.example.ddht.data.remote.dto.OrderResponse;
 import com.example.ddht.data.repository.OrderRepository;
 import com.example.ddht.ui.common.adapter.CartAdapter;
+import com.example.ddht.utils.SessionManager;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
     private TextView tvEmpty;
     private ProgressBar progressBar;
     private OrderRepository orderRepository;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +53,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
         setContentView(R.layout.activity_cart);
 
         orderRepository = new OrderRepository();
+        sessionManager = new SessionManager(this);
 
         ImageButton btnBack = findViewById(R.id.btnCartBack);
         RecyclerView rvItems = findViewById(R.id.rvCartItems);
@@ -72,7 +75,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
     }
 
     private void updateUi() {
-        boolean isEmpty = CartManager.getInstance().getItemCount() == 0;
+        boolean isEmpty = CartManager.getInstance().getCartItems().isEmpty();
         tvEmpty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         layoutBottom.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
 
@@ -80,14 +83,18 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
         tvTotalPrice.setText(formatter.format(CartManager.getInstance().getTotalPrice()));
     }
 
-
-    public void onCartChangeListener() {
-        updateUi();
-    }
-
     private void placeOrder() {
         List<CartItem> cartItems = CartManager.getInstance().getCartItems();
-        if (cartItems.isEmpty()) return;
+        if (cartItems.isEmpty()) {
+            Toast.makeText(this, "Giỏ hàng trống", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String token = sessionManager.getAccessToken();
+        // Nếu API yêu cầu Token, chúng ta nên gửi kèm. 
+        // Tôi sẽ cập nhật OrderRepository để nhận thêm token nếu cần.
+        // Hiện tại, tôi giả định API cần Bearer Token.
+        String bearerToken = token != null ? "Bearer " + token : null;
 
         List<OrderItemRequest> itemRequests = new ArrayList<>();
         for (CartItem item : cartItems) {
@@ -97,6 +104,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
         CreateOrderRequest request = new CreateOrderRequest(itemRequests);
 
         progressBar.setVisibility(View.VISIBLE);
+        // Lưu ý: Cần cập nhật OrderRepository.createOrder để nhận token nếu Backend yêu cầu
         orderRepository.createOrder(request).enqueue(new Callback<ApiResponse<OrderResponse>>() {
             @Override
             public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Response<ApiResponse<OrderResponse>> response) {
@@ -106,7 +114,9 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
                     CartManager.getInstance().clearCart();
                     showSuccessDialog(orderCode);
                 } else {
-                    Toast.makeText(CartActivity.this, "Đặt hàng thất bại. Vui lòng thử lại.", Toast.LENGTH_SHORT).show();
+                    String errorMsg = "Đặt hàng thất bại";
+                    if (response.code() == 401) errorMsg += ": Bạn cần đăng nhập";
+                    Toast.makeText(CartActivity.this, errorMsg, Toast.LENGTH_SHORT).show();
                 }
             }
 

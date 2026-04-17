@@ -30,7 +30,7 @@ public class OrderController {
 
     @GetMapping("/code/{code}")
     public ResponseEntity<ApiResponse<OrderResponse>> getOrderByCode(
-            @PathVariable String code) {
+            @PathVariable("code") String code) {
         return ResponseEntity.ok(ApiResponse.success(orderService.getOrderByCode(code)));
     }
 
@@ -41,18 +41,16 @@ public class OrderController {
 
     @PutMapping("/{id}/paid")
     public ResponseEntity<ApiResponse<OrderResponse>> markAsPaid(
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
         return ResponseEntity.ok(ApiResponse.success(orderService.markAsPaid(id)));
     }
 
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<OrderResponse>> updateStatus(
-            @PathVariable Long id,
-            @RequestParam OrderStatus status,
-            @AuthenticationPrincipal User currentUser
-    ) {
+            @PathVariable("id") Long id,
+            @RequestParam("status") OrderStatus status,
+            @AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(ApiResponse.success(orderService.updateStatus(id, status, currentUser.getId())));
     }
-
 
 }

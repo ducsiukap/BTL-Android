@@ -32,8 +32,7 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ProductResponse>> getProductById(
-            @PathVariable Long id
-    ) {
+            @PathVariable("id") Long id) {
         ProductResponse product = productService.getProductById(id);
         return ResponseEntity.ok(ApiResponse.success(product));
     }
@@ -41,16 +40,14 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(
             @PathVariable("id") Long productId,
-            @Valid @RequestBody UpdateProductRequest request
-    ) {
+            @Valid @RequestBody UpdateProductRequest request) {
         ProductResponse product = productService.updateProduct(productId, request);
         return ResponseEntity.ok(ApiResponse.success(product));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(
-            @PathVariable("id") Long productId
-    ) {
+            @PathVariable("id") Long productId) {
         productService.deleteProduct(productId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -58,8 +55,7 @@ public class ProductController {
     @PostMapping("/{id}/images")
     public ResponseEntity<ApiResponse<ProductResponse>> addImageToProduct(
             @PathVariable("id") Long productId,
-            @Valid @ModelAttribute AddImageRequest request
-    ) {
+            @Valid @ModelAttribute AddImageRequest request) {
         ProductResponse product = productService.addProductImage(productId, request);
         return ResponseEntity.ok(ApiResponse.success(product));
     }
@@ -67,8 +63,7 @@ public class ProductController {
     @DeleteMapping("/{productId}/images/{imageId}")
     public ResponseEntity<ApiResponse<ProductResponse>> deleteImageFromProduct(
             @PathVariable Long productId,
-            @PathVariable Long imageId
-    ) {
+            @PathVariable Long imageId) {
         ProductResponse product = productService.deleteProductImage(productId, imageId);
         return ResponseEntity.ok(ApiResponse.success(product));
     }
@@ -76,8 +71,7 @@ public class ProductController {
     @PostMapping("/{id}/saleoffs")
     public ResponseEntity<ApiResponse<SaleOffResponse>> addSaleOffToProduct(
             @PathVariable("id") Long productId,
-            @Valid @RequestBody CreateSaleOffRequest request
-    ) {
+            @Valid @RequestBody CreateSaleOffRequest request) {
         SaleOffResponse product = productService.addSaleOff(productId, request);
         return ResponseEntity.ok(ApiResponse.success(product));
     }
@@ -85,8 +79,7 @@ public class ProductController {
     @DeleteMapping("/{productId}/saleoffs/{saleOffId}")
     public ResponseEntity<ApiResponse<Void>> deleteSaleOffFromProduct(
             @PathVariable Long productId,
-            @PathVariable Long saleOffId
-    ) {
+            @PathVariable Long saleOffId) {
         productService.deleteSaleOff(productId, saleOffId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }

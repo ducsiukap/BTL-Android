@@ -17,48 +17,49 @@ import retrofit2.http.Header;
 import retrofit2.http.Query;
 
 public interface StatisticApi {
-        @GET("/statistics/overview")
-        Call<ApiResponse<StatisticOverviewResponse>> getStatisticOverview(
-                        @Header("Authentication") String bearerToken,
-                        @Query("from") Instant from,
-                        @Query("to") Instant to);
+    @GET("statistics/overview")
+    Call<ApiResponse<StatisticOverviewResponse>> getStatisticOverview(
+            @Header("Authorization") String bearerToken,
+            @Query("from") Instant from,
+            @Query("to") Instant to);
 
-        @GET("/statistics/revenue-series")
-        Call<ApiResponse<List<TimeSeriesPointResponse>>> getRevenueSeries(
-                        @Header("Authentication") String bearerToken,
-                        @Query("from") Instant from,
-                        @Query("to") Instant to,
-                        @Query("groupBy") String groupBy);
+    @GET("statistics/revenue-series")
+    Call<ApiResponse<List<TimeSeriesPointResponse>>> getRevenueSeries(
+            @Header("Authorization") String bearerToken,
+            @Query("from") Instant from,
+            @Query("to") Instant to,
+            @Query("groupBy") String groupBy);
 
-        @GET("/statistics/order-series")
-        Call<ApiResponse<List<TimeSeriesPointResponse>>> getOrderSeries(
-                        @Header("Authentication") String bearerToken,
-                        @Query("from") Instant from,
-                        @Query("to") Instant to,
-                        @Query("groupBy") String groupBy);
+    @GET("statistics/order-series")
+    Call<ApiResponse<List<TimeSeriesPointResponse>>> getOrderSeries(
+            @Header("Authorization") String bearerToken,
+            @Query("from") Instant from,
+            @Query("to") Instant to,
+            @Query("groupBy") String groupBy);
 
-        @GET("/statistics/top-products")
-        Call<ApiResponse<List<ProductStatisticResponse>>> getTopProducts(
-                        @Header("Authentication") String bearerToken,
-                        @Query("from") Instant from,
-                        @Query("to") Instant to,
-                        @Query("limit") Integer limit);
+    @GET("statistics/top-products")
+    Call<ApiResponse<List<ProductStatisticResponse>>> getTopProducts(
+            @Header("Authorization") String bearerToken,
+            @Query("from") Instant from,
+            @Query("to") Instant to,
+            @Query("limit") Integer limit,
+            @Query("sortBy") String sortBy);
 
-        @GET("/statistics/by-catalog")
-        Call<ApiResponse<List<CatalogStatisticResponse>>> getByCatalog(
-                        @Header("Authentication") String bearerToken,
-                        @Query("from") Instant from,
-                        @Query("to") Instant to);
+    @GET("statistics/by-catalog")
+    Call<ApiResponse<List<CatalogStatisticResponse>>> getByCatalog(
+            @Header("Authorization") String bearerToken,
+            @Query("from") Instant from,
+            @Query("to") Instant to);
 
-        @GET("/statistics/by-staff")
-        Call<ApiResponse<List<StaffStatisticResponse>>> getByStaff(
-                        @Header("Authentication") String bearerToken,
-                        @Query("from") Instant from,
-                        @Query("to") Instant to);
+    @GET("statistics/by-staff")
+    Call<ApiResponse<List<StaffStatisticResponse>>> getByStaff(
+            @Header("Authorization") String bearerToken,
+            @Query("from") Instant from,
+            @Query("to") Instant to);
 
-        @GET("/statistic/status-distribution")
-        Call<ApiResponse<List<StatusStatisticResponse>>> getStatusDistribution(
-                        @Header("Authentication") String bearerToken,
-                        @Query("from") Instant from,
-                        @Query("to") Instant to);
+    @GET("statistics/status-distribution")
+    Call<ApiResponse<List<StatusStatisticResponse>>> getStatusDistribution(
+            @Header("Authorization") String bearerToken,
+            @Query("from") Instant from,
+            @Query("to") Instant to);
 }
