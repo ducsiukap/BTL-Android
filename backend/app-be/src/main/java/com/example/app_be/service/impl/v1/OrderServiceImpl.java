@@ -88,11 +88,7 @@ public class OrderServiceImpl implements OrderService {
         return toOrderResponse(order);
     }
 
-    @Override
-    public List<OrderResponse> getOrdersByStatus(OrderStatus status) {
-        return orderRepository.findByStatus(status)
-                .stream().map(this::toOrderResponse).collect(Collectors.toList());
-    }
+
 
     @Override
     public List<OrderResponse> getStaffQueueOrders() {
@@ -102,19 +98,23 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public OrderResponse updateStatus(Long id, OrderStatus status) {
+    public OrderResponse updateStatus(Long id, OrderStatus status, UUID staffId) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
         // Logic kiểm tra chuyển đổi trạng thái hợp lệ
         validateStatusTransition(order.getStatus(), status);
 
+        // Lưu nhân viên thực hiện nếu đơn hàng chưa có người xử lý
+        if (order.getUser() == null) {
+            User staff = userRepository.findById(staffId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Staff not found with id: " + staffId));
+            order.setUser(staff);
+        }
+
         order.setStatus(status);
         Order savedOrder = orderRepository.save(order);
         OrderResponse response = toOrderResponse(savedOrder);
-
-        // [WS] Thông báo trạng thái mới cho khách hàng
-        messagingTemplate.convertAndSend("/topic/order/" + savedOrder.getCode() + "/status", response);
 
         return response;
     }
@@ -137,9 +137,6 @@ public class OrderServiceImpl implements OrderService {
         
         Order savedOrder = orderRepository.save(order);
         OrderResponse response = toOrderResponse(savedOrder);
-
-        // [WS] Thông báo cho khách hàng là đơn đã được thanh toán
-        messagingTemplate.convertAndSend("/topic/order/" + savedOrder.getCode() + "/status", response);
 
         return response;
     }
@@ -170,26 +167,6 @@ public class OrderServiceImpl implements OrderService {
                 // Có thể hủy bất cứ lúc nào miễn là chưa xong
                 break;
         }
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public OrderResponse assignStaff(Long id, UUID staffId) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-        
-        User staff = userRepository.findById(staffId)
-                .orElseThrow(() -> new ResourceNotFoundException("Staff not found"));
-        
-        order.setUser(staff);
-
-        Order savedOrder = orderRepository.save(order);
-        OrderResponse response = toOrderResponse(savedOrder);
-
-        // [WS] Thông báo cho khách hàng là đã có nhân viên nhận đơn
-        messagingTemplate.convertAndSend("/topic/order/" + savedOrder.getCode() + "/status", response);
-
-        return response;
     }
 
     // Logic sinh mã đơn hàng: OD-YYYYMMDD-xxx
