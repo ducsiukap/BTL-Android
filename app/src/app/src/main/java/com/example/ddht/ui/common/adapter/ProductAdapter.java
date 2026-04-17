@@ -5,6 +5,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -12,6 +13,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ddht.R;
+import com.example.ddht.data.manager.CartManager;
 import com.example.ddht.data.model.Product;
 import com.bumptech.glide.Glide;
 
@@ -70,12 +72,12 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             holder.tvOriginalPrice.setText(formatter.format(product.getOriginalPrice()));
             holder.tvOriginalPrice.setPaintFlags(holder.tvOriginalPrice.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
             holder.tvPrice.setTextColor(holder.itemView.getContext().getColor(R.color.brand_error));
-            holder.tvPrice.setTextSize(TypedValue.COMPLEX_UNIT_SP, 26);
+            holder.tvPrice.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20); // Reduced size slightly to fit button
         } else {
             holder.tvSaleOff.setVisibility(View.GONE);
             holder.tvOriginalPrice.setVisibility(View.GONE);
             holder.tvPrice.setTextColor(holder.itemView.getContext().getColor(R.color.brand_text_primary));
-            holder.tvPrice.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
+            holder.tvPrice.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
         }
 
         Glide.with(holder.itemView.getContext())
@@ -88,6 +90,13 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             if (listener != null) {
                 listener.onProductClick(product);
             }
+        });
+
+        holder.btnAddToCart.setOnClickListener(v -> {
+            CartManager.getInstance().addProduct(product, 1);
+            android.widget.Toast.makeText(holder.itemView.getContext(), 
+                "Đã thêm " + product.getName() + " vào giỏ hàng", 
+                android.widget.Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -103,6 +112,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
         TextView tvOriginalPrice;
         TextView tvSaleOff;
         ImageView ivProductImage;
+        ImageButton btnAddToCart;
 
         public ProductViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -112,6 +122,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ProductV
             tvOriginalPrice = itemView.findViewById(R.id.tvProductOriginalPrice);
             tvSaleOff = itemView.findViewById(R.id.tvProductSaleOff);
             ivProductImage = itemView.findViewById(R.id.ivProductImage);
+            btnAddToCart = itemView.findViewById(R.id.btnAddToCart);
         }
     }
 }
