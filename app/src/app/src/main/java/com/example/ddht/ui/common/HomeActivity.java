@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.graphics.Rect;
 import android.util.TypedValue;
+import android.view.LayoutInflater;
 import android.view.inputmethod.EditorInfo;
 import android.view.View;
 import android.widget.Button;
@@ -15,29 +16,43 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import android.widget.CheckBox;
 
 import com.example.ddht.R;
+import com.example.ddht.data.manager.CartManager;
 import com.example.ddht.data.model.Product;
 import com.example.ddht.data.remote.dto.ApiResponse;
 import com.example.ddht.data.remote.dto.CatalogDto;
+import com.example.ddht.data.remote.dto.ChatMessageDto;
+import com.example.ddht.data.remote.dto.ChatResponse;
+import com.example.ddht.data.remote.dto.OrderItemResponse;
 import com.example.ddht.data.remote.dto.OrderResponse;
 import com.example.ddht.data.remote.dto.OrderStatus;
 import com.example.ddht.data.remote.dto.ProductDto;
 import com.example.ddht.data.remote.dto.ProductImageDto;
 import com.example.ddht.data.repository.CatalogRepository;
+import com.example.ddht.data.repository.ChatRepository;
 import com.example.ddht.data.repository.OrderRepository;
 import com.example.ddht.data.repository.ProductRepository;
+import com.example.ddht.ui.common.adapter.ChatAdapter;
 import com.example.ddht.ui.common.adapter.ProductAdapter;
 import com.example.ddht.ui.common.adapter.StaffOrderAdapter;
 import com.example.ddht.ui.common.fragment.AccountFragment;
 import com.example.ddht.utils.SessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.tabs.TabLayout;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -47,6 +62,7 @@ public class HomeActivity extends AppCompatActivity {
     private SessionManager sessionManager;
     private CatalogRepository catalogRepository;
     private ProductRepository productRepository;
+    private ChatRepository chatRepository;
     private ProductAdapter productAdapter;
     private EditText edtProductSearch;
     private TextView tvProductsError;
@@ -60,7 +76,7 @@ public class HomeActivity extends AppCompatActivity {
     private StaffOrderAdapter staffOrderAdapter;
     private Button btnOrderFilter;
     private final List<String> selectedStatuses = new ArrayList<>();
-    private final String[] statusLabels = {"Chờ xử lý", "Đang nấu", "Sẵn sàng", "Hoàn thành", "Đã hủy"};
+    private final String[] statusLabels = {"CHỜ THANH TOÁN", "ĐANG CHẾ BIẾN", "SẴN SÀNG", "ĐÃ GIAO", "ĐÃ HỦY"};
     private final String[] statusValues = {"PENDING", "PREPARING", "READY", "COMPLETED", "CANCELLED"};
     private final boolean[] checkedItems = {false, false, false, false, false};
 
@@ -73,6 +89,7 @@ public class HomeActivity extends AppCompatActivity {
         catalogRepository = new CatalogRepository();
         productRepository = new ProductRepository();
         orderRepository = new OrderRepository();
+        chatRepository = new ChatRepository();
 
         RecyclerView rvProducts = findViewById(R.id.rvProducts);
         edtProductSearch = findViewById(R.id.edtProductSearch);
@@ -87,6 +104,7 @@ public class HomeActivity extends AppCompatActivity {
         android.widget.FrameLayout layoutAccount = findViewById(R.id.layoutHomeAccount);
         LinearLayout layoutOrders = findViewById(R.id.layoutHomeOrders);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
+        FloatingActionButton fabChatBot = findViewById(R.id.fabChatBot);
 
         // Products RecyclerView
         rvProducts.setLayoutManager(new GridLayoutManager(this, 2));
@@ -116,6 +134,11 @@ public class HomeActivity extends AppCompatActivity {
                 @Override
                 public void onMarkAsPaid(OrderResponse order) {
                     markStaffOrderAsPaid(order.getId());
+                }
+
+                @Override
+                public void onItemClick(OrderResponse order) {
+                    showOrderDetailDialog(order);
                 }
             });
             rvStaffOrders.setAdapter(staffOrderAdapter);
@@ -154,12 +177,14 @@ public class HomeActivity extends AppCompatActivity {
                 layoutProducts.setVisibility(View.VISIBLE);
                 layoutOrders.setVisibility(View.GONE);
                 layoutAccount.setVisibility(View.GONE);
+                fabChatBot.show();
                 return true;
             }
             if (item.getItemId() == R.id.nav_orders && isStaff) {
                 layoutProducts.setVisibility(View.GONE);
                 layoutOrders.setVisibility(View.VISIBLE);
                 layoutAccount.setVisibility(View.GONE);
+                fabChatBot.hide();
                 loadStaffOrders();
                 return true;
             }
@@ -167,6 +192,7 @@ public class HomeActivity extends AppCompatActivity {
                 layoutProducts.setVisibility(View.GONE);
                 layoutOrders.setVisibility(View.GONE);
                 layoutAccount.setVisibility(View.VISIBLE);
+                fabChatBot.hide();
                 return true;
             }
             return false;
@@ -183,11 +209,128 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        fabChatBot.setOnClickListener(v -> showChatBotDialog());
+
         loadCatalogs();
         loadProducts(currentQuery);
         if (btnOrderFilter != null) {
-            btnOrderFilter.setOnClickListener(v -> showMultiSelectFilterDialog());
+            btnOrderFilter.setOnClickListener(v -> showFilterBottomSheet());
         }
+    }
+
+    private void showChatBotDialog() {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_chat_bot, null);
+        RecyclerView rvChatHistory = dialogView.findViewById(R.id.rvChatHistory);
+        EditText edtChatMessage = dialogView.findViewById(R.id.edtChatMessage);
+        ImageButton btnSendChat = dialogView.findViewById(R.id.btnSendChat);
+
+        ChatAdapter chatAdapter = new ChatAdapter();
+        rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
+        rvChatHistory.setAdapter(chatAdapter);
+
+        chatAdapter.addMessage(new ChatMessageDto("Xin chào! Tôi là trợ lý ảo. Bạn hãy chọn gợi ý hoặc nhập nội dung để tôi hỗ trợ nhé!", false));
+
+        // Xử lý gửi tin nhắn thủ công
+        View.OnClickListener sendListener = v -> {
+            String msg = edtChatMessage.getText().toString().trim();
+            if (TextUtils.isEmpty(msg)) return;
+
+            chatAdapter.addMessage(new ChatMessageDto(msg, true));
+            edtChatMessage.setText("");
+            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+            sendChatMessage(msg, chatAdapter, rvChatHistory);
+        };
+        btnSendChat.setOnClickListener(sendListener);
+        edtChatMessage.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEND) {
+                sendListener.onClick(btnSendChat);
+                return true;
+            }
+            return false;
+        });
+
+        // Xử lý nút gợi ý
+        View.OnClickListener suggestListener = v -> {
+            Button b = (Button) v;
+            String msg = b.getText().toString();
+            chatAdapter.addMessage(new ChatMessageDto(msg, true));
+            rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
+            sendChatMessage(msg, chatAdapter, rvChatHistory);
+        };
+
+        dialogView.findViewById(R.id.btnChatSuggestSearch).setOnClickListener(suggestListener);
+        dialogView.findViewById(R.id.btnChatSuggestBestSeller).setOnClickListener(suggestListener);
+        dialogView.findViewById(R.id.btnChatSuggestPrice).setOnClickListener(suggestListener);
+        dialogView.findViewById(R.id.btnChatSuggestAddToCart).setOnClickListener(suggestListener);
+
+        new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setPositiveButton("Đóng", null)
+                .show();
+    }
+
+    private void sendChatMessage(String msg, ChatAdapter adapter, RecyclerView rv) {
+        chatRepository.sendMessage(msg).enqueue(new Callback<ApiResponse<ChatResponse>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<ChatResponse>> call, Response<ApiResponse<ChatResponse>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                    ChatResponse chatData = response.body().getData();
+                    adapter.addMessage(new ChatMessageDto(chatData.getResponse(), false));
+                    rv.smoothScrollToPosition(adapter.getItemCount() - 1);
+
+                    if (chatData.getActions() != null) {
+                        for (ChatResponse.Action action : chatData.getActions()) {
+                            handleBotAction(action);
+                        }
+                    }
+
+                    if (chatData.getProducts() != null && !chatData.getProducts().isEmpty()) {
+                        List<Product> mapped = mapProducts(chatData.getProducts());
+                        productAdapter.submit(mapped);
+                    }
+                }
+            }
+            @Override public void onFailure(Call<ApiResponse<ChatResponse>> call, Throwable t) {
+                adapter.addMessage(new ChatMessageDto("Lỗi kết nối chatbot.", false));
+            }
+        });
+    }
+
+    private void handleBotAction(ChatResponse.Action action) {
+        String type = action.getType();
+        if (TextUtils.isEmpty(type)) return;
+
+        switch (type.toUpperCase()) {
+            case "SEARCH":
+                if (!TextUtils.isEmpty(action.getSearchQuery())) {
+                    edtProductSearch.setText(action.getSearchQuery());
+                    currentQuery = action.getSearchQuery();
+                    loadProducts(currentQuery);
+                }
+                break;
+            case "ADD_TO_CART":
+                if (action.getProductId() != null) {
+                    productRepository.getProductById(action.getProductId()).enqueue(new Callback<ApiResponse<ProductDto>>() {
+                        @Override
+                        public void onResponse(Call<ApiResponse<ProductDto>> call, Response<ApiResponse<ProductDto>> response) {
+                            if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                                Product model = mapDtoToProduct(response.body().getData());
+                                CartManager.getInstance().addProduct(model, action.getQuantity() != null ? action.getQuantity() : 1);
+                                Toast.makeText(HomeActivity.this, "Đã thêm " + model.getName() + " vào giỏ hàng", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                        @Override public void onFailure(Call<ApiResponse<ProductDto>> call, Throwable t) {}
+                    });
+                }
+                break;
+        }
+    }
+
+    private Product mapDtoToProduct(ProductDto dto) {
+        double originalPrice = dto.getOriginalPrice() == null ? 0 : dto.getOriginalPrice();
+        double displayPrice = dto.getDiscountedPrice() == null ? originalPrice : dto.getDiscountedPrice();
+        String imageUrl = (dto.getImages() != null && !dto.getImages().isEmpty()) ? dto.getImages().get(0).getUrl() : null;
+        return new Product(dto.getId(), dto.getName(), dto.getDescription(), displayPrice, originalPrice, Boolean.TRUE.equals(dto.getSaleOff()), imageUrl);
     }
 
     private void loadStaffOrders() {
@@ -210,17 +353,28 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    private void showMultiSelectFilterDialog() {
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-        builder.setTitle("Chọn trạng thái đơn hàng");
-        builder.setMultiChoiceItems(statusLabels, checkedItems, (dialog, which, isChecked) -> {
-            checkedItems[which] = isChecked;
-        });
+    private void showFilterBottomSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.layout_filter_order_status, null);
+        LinearLayout container = view.findViewById(R.id.layoutFilterContainer);
+        
+        CheckBox[] checkBoxes = new CheckBox[statusLabels.length];
+        for (int i = 0; i < statusLabels.length; i++) {
+            CheckBox cb = new CheckBox(this);
+            cb.setText(statusLabels[i]);
+            cb.setChecked(checkedItems[i]);
+            cb.setTag(i);
+            cb.setPadding(0, 16, 0, 16);
+            cb.setTextSize(16);
+            container.addView(cb);
+            checkBoxes[i] = cb;
+        }
 
-        builder.setPositiveButton("Áp dụng", (dialog, which) -> {
+        view.findViewById(R.id.btnFilterApply).setOnClickListener(v -> {
             selectedStatuses.clear();
             int count = 0;
-            for (int i = 0; i < checkedItems.length; i++) {
+            for (int i = 0; i < checkBoxes.length; i++) {
+                checkedItems[i] = checkBoxes[i].isChecked();
                 if (checkedItems[i]) {
                     selectedStatuses.add(statusValues[i]);
                     count++;
@@ -234,19 +388,22 @@ public class HomeActivity extends AppCompatActivity {
             }
             
             loadStaffOrders();
+            dialog.dismiss();
         });
 
-        builder.setNegativeButton("Hủy", null);
-        builder.setNeutralButton("Xóa bộ lọc", (dialog, which) -> {
+        view.findViewById(R.id.btnFilterReset).setOnClickListener(v -> {
             for (int i = 0; i < checkedItems.length; i++) {
                 checkedItems[i] = false;
+                checkBoxes[i].setChecked(false);
             }
             selectedStatuses.clear();
             btnOrderFilter.setText("Lọc: Tất cả");
             loadStaffOrders();
+            dialog.dismiss();
         });
-        
-        builder.create().show();
+
+        dialog.setContentView(view);
+        dialog.show();
     }
 
     private void updateStaffOrderStatus(Long orderId, String status) {
@@ -330,38 +487,9 @@ public class HomeActivity extends AppCompatActivity {
             if (dto == null) {
                 continue;
             }
-            String name = TextUtils.isEmpty(dto.getName()) ? "Sản phẩm" : dto.getName();
-            String subtitle = TextUtils.isEmpty(dto.getDescription()) ? "" : dto.getDescription();
-            double originalPrice = dto.getOriginalPrice() == null ? 0 : dto.getOriginalPrice();
-            double displayPrice = resolveDisplayPrice(dto);
-            boolean saleOff = Boolean.TRUE.equals(dto.getSaleOff())
-                    && dto.getDiscountedPrice() != null
-                    && dto.getDiscountedPrice() < originalPrice;
-            String imageUrl = resolveImageUrl(dto);
-            mapped.add(new Product(dto.getId(), name, subtitle, displayPrice, originalPrice, saleOff, imageUrl));
+            mapped.add(mapDtoToProduct(dto));
         }
         return mapped;
-    }
-
-    private double resolveDisplayPrice(ProductDto dto) {
-        if (Boolean.TRUE.equals(dto.getSaleOff()) && dto.getDiscountedPrice() != null) {
-            return dto.getDiscountedPrice();
-        }
-        if (dto.getOriginalPrice() != null) {
-            return dto.getOriginalPrice();
-        }
-        return 0;
-    }
-
-    private String resolveImageUrl(ProductDto dto) {
-        if (dto.getImages() == null || dto.getImages().isEmpty()) {
-            return null;
-        }
-        ProductImageDto first = dto.getImages().get(0);
-        if (first == null || TextUtils.isEmpty(first.getUrl())) {
-            return null;
-        }
-        return first.getUrl();
     }
 
     private void showProductsError(String message) {
@@ -454,7 +582,67 @@ public class HomeActivity extends AppCompatActivity {
             if (position < spanCount) {
                 outRect.top = spacing;
             }
-            outRect.bottom = spacing;
+        }
+    }
+
+    private void showOrderDetailDialog(OrderResponse order) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.layout_dialog_order_detail, null);
+        
+        TextView tvCode = dialogView.findViewById(R.id.tvDialogOrderCode);
+        TextView tvStatus = dialogView.findViewById(R.id.tvDialogOrderStatus);
+        TextView tvTotal = dialogView.findViewById(R.id.tvDialogOrderTotal);
+        LinearLayout itemsContainer = dialogView.findViewById(R.id.layoutDialogOrderItems);
+        Button btnClose = dialogView.findViewById(R.id.btnDialogOrderClose);
+
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        
+        tvCode.setText("#" + (order.getCode() != null ? order.getCode() : order.getId().toString()));
+        tvStatus.setText(mapOrderStatusToString(order.getStatus()));
+        tvTotal.setText(formatter.format(order.getTotalPrice()));
+
+        if (order.getItems() != null) {
+            for (OrderItemResponse item : order.getItems()) {
+                View itemView = getLayoutInflater().inflate(R.layout.item_dialog_order_detail, itemsContainer, false);
+                TextView tvQty = itemView.findViewById(R.id.tvOrderItemQty);
+                TextView tvName = itemView.findViewById(R.id.tvOrderItemName);
+                TextView tvPrice = itemView.findViewById(R.id.tvOrderItemPrice);
+                TextView tvSubtotal = itemView.findViewById(R.id.tvOrderItemSubtotal);
+
+                tvQty.setText(String.valueOf(item.getQuantity()));
+                tvName.setText(item.getProductName());
+                
+                double unitPrice = item.getUnitPrice();
+                double itemTotal = item.getTotalPrice();
+                if (unitPrice <= 0 && itemTotal > 0 && item.getQuantity() > 0) {
+                    unitPrice = itemTotal / item.getQuantity();
+                }
+                
+                tvPrice.setText(formatter.format(unitPrice));
+                tvSubtotal.setText(formatter.format(itemTotal));
+
+                itemsContainer.addView(itemView);
+            }
+        }
+
+        AlertDialog dialog = builder.setView(dialogView).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+        
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private String mapOrderStatusToString(OrderStatus status) {
+        if (status == null) return "N/A";
+        switch (status) {
+            case PENDING: return "CHỜ THANH TOÁN";
+            case PREPARING: return "ĐANG CHẾ BIẾN";
+            case READY: return "SẴN SÀNG";
+            case COMPLETED: return "ĐÃ GIAO";
+            case CANCELLED: return "ĐÃ HỦY";
+            default: return status.name();
         }
     }
 }

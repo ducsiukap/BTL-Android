@@ -26,6 +26,7 @@ public class StaffOrderAdapter extends RecyclerView.Adapter<StaffOrderAdapter.St
     public interface OnOrderActionListener {
         void onUpdateStatus(OrderResponse order, OrderStatus nextStatus);
         void onMarkAsPaid(OrderResponse order);
+        void onItemClick(OrderResponse order);
     }
 
     public StaffOrderAdapter(OnOrderActionListener listener) {
@@ -68,25 +69,29 @@ public class StaffOrderAdapter extends RecyclerView.Adapter<StaffOrderAdapter.St
         // Button logic
         if (order.getStatus() == OrderStatus.PENDING) {
             holder.btnAction.setVisibility(View.VISIBLE);
-            holder.btnAction.setText("Xác nhận thanh toán");
+            holder.btnAction.setText("XÁC NHẬN THANH TOÁN");
             holder.btnAction.setOnClickListener(v -> {
                 if (listener != null) listener.onMarkAsPaid(order);
             });
         } else if (order.getStatus() == OrderStatus.PREPARING) {
             holder.btnAction.setVisibility(View.VISIBLE);
-            holder.btnAction.setText("Sẵn sàng");
+            holder.btnAction.setText("CHẾ BIẾN XONG");
             holder.btnAction.setOnClickListener(v -> {
                 if (listener != null) listener.onUpdateStatus(order, OrderStatus.READY);
             });
         } else if (order.getStatus() == OrderStatus.READY) {
             holder.btnAction.setVisibility(View.VISIBLE);
-            holder.btnAction.setText("Hoàn thành");
+            holder.btnAction.setText("XÁC NHẬN ĐÃ GIAO");
             holder.btnAction.setOnClickListener(v -> {
                 if (listener != null) listener.onUpdateStatus(order, OrderStatus.COMPLETED);
             });
         } else {
             holder.btnAction.setVisibility(View.GONE);
         }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onItemClick(order);
+        });
     }
 
     private String mapStatus(OrderStatus status) {

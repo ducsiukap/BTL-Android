@@ -1,5 +1,6 @@
 package com.example.ddht.ui.common;
 
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -43,6 +44,7 @@ public class ProductDetailActivity extends AppCompatActivity {
     private TextView tvDescription;
     private TextView tvOriginalPrice;
     private TextView tvDiscountedPrice;
+    private TextView tvSaleBadge;
     private ProductImagePagerAdapter imagePagerAdapter;
 
     private Long productId;
@@ -68,6 +70,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         tvDescription = findViewById(R.id.tvProductDetailDescription);
         tvOriginalPrice = findViewById(R.id.tvProductDetailOriginalPrice);
         tvDiscountedPrice = findViewById(R.id.tvProductDetailDiscountedPrice);
+        tvSaleBadge = findViewById(R.id.tvProductDetailSaleBadge);
 
         tvQty = findViewById(R.id.tvProductDetailQty);
         ImageButton btnQtyMinus = findViewById(R.id.btnProductDetailQtyMinus);
@@ -171,11 +174,23 @@ public class ProductDetailActivity extends AppCompatActivity {
 
         tvName.setText(name);
         tvDescription.setText(description);
-        tvOriginalPrice.setText(getString(R.string.manager_product_original_price, formatter.format(originalPrice)));
-        tvDiscountedPrice.setText(getString(R.string.manager_product_discounted_price, formatter.format(discountedPrice)));
 
-        boolean hasSale = Boolean.TRUE.equals(product.getSaleOff()) && discountedPrice < originalPrice;
-        tvDiscountedPrice.setTextColor(getColor(hasSale ? R.color.brand_error : R.color.brand_text_primary));
+        boolean hasSale = (discountedPrice < originalPrice) || Boolean.TRUE.equals(product.getSaleOff());
+
+        if (hasSale && discountedPrice < originalPrice) {
+            tvOriginalPrice.setVisibility(View.VISIBLE);
+            tvOriginalPrice.setText(formatter.format(originalPrice));
+            tvOriginalPrice.setPaintFlags(tvOriginalPrice.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+            
+            tvDiscountedPrice.setText(formatter.format(discountedPrice));
+            tvDiscountedPrice.setTextColor(getColor(R.color.brand_primary));
+            tvSaleBadge.setVisibility(View.VISIBLE);
+        } else {
+            tvOriginalPrice.setVisibility(View.GONE);
+            tvDiscountedPrice.setText(formatter.format(originalPrice));
+            tvDiscountedPrice.setTextColor(getColor(R.color.brand_text_primary));
+            tvSaleBadge.setVisibility(View.GONE);
+        }
 
         List<String> urls = new java.util.ArrayList<>();
         if (product.getImages() != null) {

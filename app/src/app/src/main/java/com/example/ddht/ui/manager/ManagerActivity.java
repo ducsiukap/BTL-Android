@@ -57,7 +57,9 @@ public class ManagerActivity extends AppCompatActivity {
                 .commit();
 
         getSupportFragmentManager().beginTransaction()
-                .commit();
+            .replace(R.id.layoutManagerCatalogTab, new CatalogFragment())
+            .replace(R.id.layoutManagerProductTab, new ManagerProductsFragment())
+            .commit();
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.layoutManagerSaleOffTab, new SaleOffFragment())
