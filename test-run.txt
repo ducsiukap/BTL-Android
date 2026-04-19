@@ -1,0 +1,22 @@
+------------------------------------------------------
+1. Tao tk admin
+
+POST /api/v1/users/no-auth
+body:
+{
+    "fullName": "TestNoAuthUser",
+    "email": "mng@gmail.com",
+    "role": "MANAGER"
+}
+
+------------------------------------------------------
+2. login app bang tai khoan admin vua tao (pass mac dinh: 12345678)
+mail: mng@gmail.com
+pass: 12345678
+
+------------------------------------------------------
+3. Khoi tao du lieu can thiet
+login app with role=MANAGER co the khoi tao:
++ user
++ catalogs -> products, saleoff
+...
