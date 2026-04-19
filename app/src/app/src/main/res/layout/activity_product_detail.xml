@@ -60,18 +60,6 @@
                     android:id="@+id/vpProductDetailImages"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent" />
-
-                <ImageButton
-                    android:id="@+id/btnProductDetailEditImages"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_gravity="top|end"
-                    android:layout_margin="8dp"
-                    android:background="@drawable/bg_action_icon_button"
-                    android:contentDescription="@string/manager_product_manage_images"
-                    android:padding="9dp"
-                    android:src="@android:drawable/ic_menu_edit"
-                    app:tint="@color/brand_primary" />
             </FrameLayout>
 
             <TextView
@@ -112,27 +100,6 @@
                 android:layout_marginTop="4dp"
                 android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
                 android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:id="@+id/tvProductDetailStatus"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/manager_product_status_selling"
-                    android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/switchProductDetailSelling"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 
@@ -144,46 +111,65 @@
         android:textColor="@android:color/holo_red_dark"
         android:visibility="gone" />
 
-
     <LinearLayout
-        android:id="@+id/layoutProductDetailManagerActions"
+        android:id="@+id/layoutProductDetailShopping"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
+        android:gravity="center_vertical"
         android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/btnProductDetailEdit"
+        <TextView
             android:layout_width="0dp"
-            android:layout_height="44dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:background="@drawable/bg_action_icon_button"
-            android:contentDescription="@string/common_edit"
-            android:padding="10dp"
-            android:src="@android:drawable/ic_menu_edit"
-            app:tint="@color/brand_primary" />
+            android:text="@string/product_detail_quantity"
+            android:textAppearance="@style/TextAppearance.Material3.BodyLarge"
+            android:textStyle="bold" />
 
-        <Space
-            android:layout_width="8dp"
-            android:layout_height="1dp" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/btnProductDetailDelete"
-            android:layout_width="0dp"
-            android:layout_height="44dp"
-            android:layout_weight="1"
-            android:background="@drawable/bg_action_icon_button"
-            android:contentDescription="@string/common_delete"
-            android:padding="10dp"
-            android:src="@android:drawable/ic_menu_delete"
-            app:tint="@color/brand_primary" />
+            <ImageButton
+                android:id="@+id/btnProductDetailQtyMinus"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_action_icon_button"
+                android:contentDescription="@null"
+                android:padding="8dp"
+                android:src="@drawable/ic_remove"
+                app:tint="@color/brand_primary" />
+
+            <TextView
+                android:id="@+id/tvProductDetailQty"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="1"
+                android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnProductDetailQtyPlus"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_action_icon_button"
+                android:contentDescription="@null"
+                android:padding="8dp"
+                android:src="@drawable/ic_add"
+                app:tint="@color/brand_primary" />
+        </LinearLayout>
     </LinearLayout>
 
     <Button
-        android:id="@+id/btnProductDetailAddSaleOff"
+        android:id="@+id/btnProductDetailAddToCart"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/manager_product_add_saleoff" />
+        android:layout_marginTop="12dp"
+        android:text="@string/product_detail_add_to_cart"
+        app:backgroundTint="@color/brand_primary" />
 
 </LinearLayout>

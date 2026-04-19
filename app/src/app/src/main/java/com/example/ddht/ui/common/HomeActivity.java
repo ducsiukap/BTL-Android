@@ -33,14 +33,11 @@ import com.example.ddht.data.repository.ProductRepository;
 import com.example.ddht.ui.common.adapter.ProductAdapter;
 import com.example.ddht.ui.common.adapter.StaffOrderAdapter;
 import com.example.ddht.ui.common.fragment.AccountFragment;
-import com.example.ddht.ui.manager.ProductDetailActivity;
 import com.example.ddht.utils.SessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.tabs.TabLayout;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import retrofit2.Call;
 import retrofit2.Callback;
