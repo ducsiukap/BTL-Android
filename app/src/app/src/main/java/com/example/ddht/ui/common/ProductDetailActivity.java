@@ -102,7 +102,6 @@ public class ProductDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // Quantity logic
         btnQtyMinus.setOnClickListener(v -> {
             if (selectedQuantity > 1) {
                 selectedQuantity--;

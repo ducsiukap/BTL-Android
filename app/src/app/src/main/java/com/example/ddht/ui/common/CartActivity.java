@@ -97,12 +97,6 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
             return;
         }
 
-        String token = sessionManager.getAccessToken();
-        // Nếu API yêu cầu Token, chúng ta nên gửi kèm. 
-        // Tôi sẽ cập nhật OrderRepository để nhận thêm token nếu cần.
-        // Hiện tại, tôi giả định API cần Bearer Token.
-        String bearerToken = token != null ? "Bearer " + token : null;
-
         List<OrderItemRequest> itemRequests = new ArrayList<>();
         for (CartItem item : cartItems) {
             itemRequests.add(new OrderItemRequest(item.getProduct().getId(), item.getQuantity()));
@@ -111,7 +105,6 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
         CreateOrderRequest request = new CreateOrderRequest(itemRequests);
 
         progressBar.setVisibility(View.VISIBLE);
-        // Lưu ý: Cần cập nhật OrderRepository.createOrder để nhận token nếu Backend yêu cầu
         orderRepository.createOrder(request).enqueue(new Callback<ApiResponse<OrderResponse>>() {
             @Override
             public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Response<ApiResponse<OrderResponse>> response) {
@@ -145,7 +138,6 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
                 .setCancelable(false);
 
         if (paymentUrl != null && !paymentUrl.isEmpty()) {
-            // Tạo ImageView để chứa mã QR
             ImageView qrImageView = new ImageView(this);
             int padding = (int) (16 * getResources().getDisplayMetrics().density);
             qrImageView.setPadding(padding, padding, padding, padding);

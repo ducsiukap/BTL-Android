@@ -93,8 +93,7 @@ public class OrderLookupActivity extends AppCompatActivity {
     private void bindOrder(OrderResponse order) {
         tvResCode.setText("Mã đơn: " + order.getCode());
         tvResStatus.setText(mapStatusToVietnamese(order.getStatus()));
-        
-        // Build items string
+
         StringBuilder sb = new StringBuilder();
         if (order.getItems() != null) {
             for (OrderItemResponse item : order.getItems()) {
@@ -107,7 +106,6 @@ public class OrderLookupActivity extends AppCompatActivity {
         NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
         tvResTotal.setText(formatter.format(order.getTotalPrice()));
 
-        // Hiện nút hủy nếu trạng thái là PENDING hoặc PREPARING
         currentOrder = order;
         if (order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.PREPARING) {
             btnCancelOrder.setVisibility(View.VISIBLE);
@@ -129,7 +127,7 @@ public class OrderLookupActivity extends AppCompatActivity {
                     btnCancelOrder.setEnabled(true);
                     if (response.isSuccessful()) {
                         Toast.makeText(OrderLookupActivity.this, "Đã hủy đơn hàng thành công", Toast.LENGTH_SHORT).show();
-                        performLookup(); // Load lại dữ liệu
+                        performLookup();
                     } else {
                         Toast.makeText(OrderLookupActivity.this, "Không thể hủy đơn hàng (Mã: " + response.code() + ")", Toast.LENGTH_SHORT).show();
                     }

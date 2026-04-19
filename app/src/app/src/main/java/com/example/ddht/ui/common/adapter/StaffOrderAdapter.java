@@ -65,8 +65,6 @@ public class StaffOrderAdapter extends RecyclerView.Adapter<StaffOrderAdapter.St
         }
         holder.tvItems.setText(sb.toString().trim());
 
-
-        // Button logic
         if (order.getStatus() == OrderStatus.PENDING) {
             holder.btnAction.setVisibility(View.VISIBLE);
             holder.btnAction.setText("XÁC NHẬN THANH TOÁN");
