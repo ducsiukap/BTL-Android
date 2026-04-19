@@ -30,6 +30,9 @@
             android:name=".ui.manager.ProductDetailActivity"
             android:exported="false" />
         <activity
+            android:name=".ui.common.ProductDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.common.HomeActivity"
             android:exported="false" />
         <activity
