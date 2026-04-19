@@ -100,10 +100,14 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponse> getStaffQueueOrders(List<OrderStatus> statuses) {
         if (statuses != null && !statuses.isEmpty()) {
             return orderRepository.findByStatusInOrderByCreatedAtDesc(statuses)
-                    .stream().map(this::toOrderResponse).collect(Collectors.toList());
+                    .stream()
+                    .map(order -> toOrderResponse(order, null))
+                    .collect(Collectors.toList());
         }
         return orderRepository.findAllByOrderByCreatedAtDesc()
-                .stream().map(this::toOrderResponse).collect(Collectors.toList());
+                .stream()
+                .map(order -> toOrderResponse(order, null))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -146,7 +150,6 @@ public class OrderServiceImpl implements OrderService {
         
         Order savedOrder = orderRepository.save(order);
         return toOrderResponse(savedOrder, null);
-        return toOrderResponse(savedOrder);
     }
 
     @Override
@@ -160,7 +163,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(OrderStatus.CANCELLED);
         Order savedOrder = orderRepository.save(order);
-        return toOrderResponse(savedOrder);
+        return toOrderResponse(savedOrder,null);
     }
 
     private void validateStatusTransition(OrderStatus current, OrderStatus target) {
