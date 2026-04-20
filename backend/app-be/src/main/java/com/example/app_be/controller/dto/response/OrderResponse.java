@@ -16,7 +16,6 @@ public record OrderResponse(
         Instant createdAt,
         UUID staffId,
         String staffName,
-        String paymentUrl,
         List<OrderItemResponse> items
 ) {
 }

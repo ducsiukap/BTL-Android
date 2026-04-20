@@ -151,14 +151,6 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
-                <Button
-                    android:id="@+id/btnLookupCancelOrder"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Hủy đơn hàng"
-                    app:backgroundTint="#FF5252"
-                    android:visibility="gone" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </ScrollView>

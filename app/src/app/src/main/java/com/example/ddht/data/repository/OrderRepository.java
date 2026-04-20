@@ -36,7 +36,7 @@ public class OrderRepository {
         return orderApiService.markAsPaid(id, token);
     }
 
-    public Call<ApiResponse<OrderResponse>> cancelOrderGuest(Long id) {
-        return orderApiService.cancelOrderByGuest(id);
+    public Call<ApiResponse<OrderResponse>> cancelOrder(Long id, String token) {
+        return orderApiService.cancelOrder(id, token);
     }
 }

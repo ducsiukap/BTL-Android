@@ -14,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.ddht.data.remote.SimpleStompClient;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
@@ -54,7 +55,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
     private OrderRepository orderRepository;
     private SessionManager sessionManager;
     private AlertDialog successDialog;
-    private com.example.ddht.data.remote.SimpleStompClient stompClient;
+    private SimpleStompClient stompClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -132,25 +133,11 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
 
     private void showSuccessDialog(OrderResponse order) {
         String code = order.getCode();
-        String paymentUrl = order.getPaymentUrl();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this)
                 .setTitle("Đặt hàng thành công!")
-                .setMessage(getString(R.string.order_created_success, code))
+                .setMessage(getString(R.string.order_created_success, code) + "\n\nVui lòng đến quầy thu ngân để thanh toán đơn hàng.")
                 .setCancelable(false);
-
-        if (paymentUrl != null && !paymentUrl.isEmpty()) {
-            ImageView qrImageView = new ImageView(this);
-            int padding = (int) (16 * getResources().getDisplayMetrics().density);
-            qrImageView.setPadding(padding, padding, padding, padding);
-            
-            Bitmap qrBitmap = generateQrCode(paymentUrl);
-            if (qrBitmap != null) {
-                qrImageView.setImageBitmap(qrBitmap);
-                builder.setView(qrImageView);
-                builder.setMessage(getString(R.string.order_created_success, code) + "\n\nBạn có thể quét mã QR dưới đây để thanh toán ngay:");
-            }
-        }
 
         successDialog = builder.setNeutralButton(R.string.order_copy_code, (dialog, which) -> {
                     ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
@@ -185,24 +172,6 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
         }
     }
 
-    private Bitmap generateQrCode(String data) {
-        QRCodeWriter writer = new QRCodeWriter();
-        try {
-            BitMatrix bitMatrix = writer.encode(data, BarcodeFormat.QR_CODE, 512, 512);
-            int width = bitMatrix.getWidth();
-            int height = bitMatrix.getHeight();
-            Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    bmp.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
-                }
-            }
-            return bmp;
-        } catch (WriterException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     @Override
     public void onCartChanged() {
