@@ -40,6 +40,9 @@ public interface OrderApiService {
             @Header("Authorization") String bearerToken
     );
 
-    @PUT("orders/{id}/cancel-guest")
-    Call<ApiResponse<OrderResponse>> cancelOrderByGuest(@Path("id") Long id);
+    @PUT("orders/{id}/cancel")
+    Call<ApiResponse<OrderResponse>> cancelOrder(
+            @Path("id") Long id,
+            @Header("Authorization") String bearerToken
+    );
 }

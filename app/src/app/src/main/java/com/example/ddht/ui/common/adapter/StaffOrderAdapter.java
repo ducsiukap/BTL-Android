@@ -26,6 +26,7 @@ public class StaffOrderAdapter extends RecyclerView.Adapter<StaffOrderAdapter.St
     public interface OnOrderActionListener {
         void onUpdateStatus(OrderResponse order, OrderStatus nextStatus);
         void onMarkAsPaid(OrderResponse order);
+        void onCancelOrder(OrderResponse order);
         void onItemClick(OrderResponse order);
     }
 
@@ -71,20 +72,23 @@ public class StaffOrderAdapter extends RecyclerView.Adapter<StaffOrderAdapter.St
             holder.btnAction.setOnClickListener(v -> {
                 if (listener != null) listener.onMarkAsPaid(order);
             });
+            holder.btnCancel.setVisibility(View.VISIBLE);
+            holder.btnCancel.setOnClickListener(v -> {
+                if (listener != null) listener.onCancelOrder(order);
+            });
         } else if (order.getStatus() == OrderStatus.PREPARING) {
             holder.btnAction.setVisibility(View.VISIBLE);
-            holder.btnAction.setText("CHẾ BIẾN XONG");
-            holder.btnAction.setOnClickListener(v -> {
-                if (listener != null) listener.onUpdateStatus(order, OrderStatus.READY);
-            });
-        } else if (order.getStatus() == OrderStatus.READY) {
-            holder.btnAction.setVisibility(View.VISIBLE);
-            holder.btnAction.setText("XÁC NHẬN ĐÃ GIAO");
+            holder.btnAction.setText("HOÀN THÀNH");
             holder.btnAction.setOnClickListener(v -> {
                 if (listener != null) listener.onUpdateStatus(order, OrderStatus.COMPLETED);
             });
+            holder.btnCancel.setVisibility(View.VISIBLE);
+            holder.btnCancel.setOnClickListener(v -> {
+                if (listener != null) listener.onCancelOrder(order);
+            });
         } else {
             holder.btnAction.setVisibility(View.GONE);
+            holder.btnCancel.setVisibility(View.GONE);
         }
 
         holder.itemView.setOnClickListener(v -> {
@@ -97,8 +101,7 @@ public class StaffOrderAdapter extends RecyclerView.Adapter<StaffOrderAdapter.St
         switch (status) {
             case PENDING: return "CHỜ THANH TOÁN";
             case PREPARING: return "ĐANG CHẾ BIẾN";
-            case READY: return "SẴN SÀNG";
-            case COMPLETED: return "ĐÃ GIAO";
+            case COMPLETED: return "HOÀN THÀNH";
             case CANCELLED: return "ĐÃ HỦY";
             default: return status.name();
         }
@@ -111,7 +114,7 @@ public class StaffOrderAdapter extends RecyclerView.Adapter<StaffOrderAdapter.St
 
     static class StaffOrderViewHolder extends RecyclerView.ViewHolder {
         TextView tvCode, tvStatus, tvTime, tvItems, tvTotal;
-        Button btnAction;
+        Button btnAction, btnCancel;
 
         public StaffOrderViewHolder(@NonNull View view) {
             super(view);
@@ -121,6 +124,7 @@ public class StaffOrderAdapter extends RecyclerView.Adapter<StaffOrderAdapter.St
             tvItems = view.findViewById(R.id.tvStaffOrderItems);
             tvTotal = view.findViewById(R.id.tvStaffOrderTotal);
             btnAction = view.findViewById(R.id.btnStaffOrderAction);
+            btnCancel = view.findViewById(R.id.btnStaffOrderCancel);
         }
     }
 }

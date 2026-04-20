@@ -19,5 +19,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     long countByCreatedAtBetween(Instant start, Instant end);
 
+    List<Order> findByStatusAndCreatedAtBefore(OrderStatus status, Instant time);
+
     Optional<Order> findByCodeContainingIgnoreCase(String code);
 }

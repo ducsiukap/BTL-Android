@@ -196,7 +196,7 @@
     <string name="cart_place_order">Đặt hàng ngay</string>
     <string name="cart_item_remove">Xóa</string>
     <string name="order_lookup_title">Tra cứu đơn hàng</string>
-    <string name="order_lookup_hint">Nhập mã đơn hàng (VD: OD-20240416-001)</string>
+    <string name="order_lookup_hint">Nhập mã đơn hàng (VD: OD-001)</string>
     <string name="order_lookup_btn">Tìm kiếm</string>
     <string name="order_status_label">Trạng thái:</string>
     <string name="order_not_found">Không tìm thấy đơn hàng với mã này</string>

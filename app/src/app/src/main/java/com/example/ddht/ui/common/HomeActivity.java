@@ -77,9 +77,9 @@ public class HomeActivity extends AppCompatActivity {
     private StaffOrderAdapter staffOrderAdapter;
     private Button btnOrderFilter;
     private final List<String> selectedStatuses = new ArrayList<>();
-    private final String[] statusLabels = {"CHỜ THANH TOÁN", "ĐANG CHẾ BIẾN", "SẴN SÀNG", "ĐÃ GIAO", "ĐÃ HỦY"};
-    private final String[] statusValues = {"PENDING", "PREPARING", "READY", "COMPLETED", "CANCELLED"};
-    private final boolean[] checkedItems = {false, false, false, false, false};
+    private final String[] statusLabels = {"CHỜ THANH TOÁN", "ĐANG CHẾ BIẾN", "HOÀN THÀNH", "ĐÃ HỦY"};
+    private final String[] statusValues = {"PENDING", "PREPARING", "COMPLETED", "CANCELLED"};
+    private final boolean[] checkedItems = {false, false, false, false};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -135,6 +135,11 @@ public class HomeActivity extends AppCompatActivity {
                 @Override
                 public void onMarkAsPaid(OrderResponse order) {
                     markStaffOrderAsPaid(order.getId());
+                }
+
+                @Override
+                public void onCancelOrder(OrderResponse order) {
+                    cancelStaffOrder(order.getId());
                 }
 
                 @Override
@@ -462,13 +467,34 @@ public class HomeActivity extends AppCompatActivity {
                     Toast.makeText(HomeActivity.this, "Đã xác nhận thanh toán", Toast.LENGTH_SHORT).show();
                     loadStaffOrders();
                 } else {
-                    Toast.makeText(HomeActivity.this, "Lỗi " + response.code() + ": Không thể xác nhận thanh toán", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(HomeActivity.this, "Lỗi: Không thể xác nhận thanh toán", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Throwable t) {
-                Toast.makeText(HomeActivity.this, "Lỗi thanh toán: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(HomeActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void cancelStaffOrder(Long orderId) {
+        String token = "Bearer " + sessionManager.getAccessToken();
+        orderRepository.cancelOrder(orderId, token).enqueue(new Callback<ApiResponse<OrderResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, 
+                                   @NonNull Response<ApiResponse<OrderResponse>> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(HomeActivity.this, "Đã hủy đơn hàng", Toast.LENGTH_SHORT).show();
+                    loadStaffOrders();
+                } else {
+                    Toast.makeText(HomeActivity.this, "Lỗi: Không thể hủy đơn hàng", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Throwable t) {
+                Toast.makeText(HomeActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -664,8 +690,7 @@ public class HomeActivity extends AppCompatActivity {
         switch (status) {
             case PENDING: return "CHỜ THANH TOÁN";
             case PREPARING: return "ĐANG CHẾ BIẾN";
-            case READY: return "SẴN SÀNG";
-            case COMPLETED: return "ĐÃ GIAO";
+            case COMPLETED: return "HOÀN THÀNH";
             case CANCELLED: return "ĐÃ HỦY";
             default: return status.name();
         }

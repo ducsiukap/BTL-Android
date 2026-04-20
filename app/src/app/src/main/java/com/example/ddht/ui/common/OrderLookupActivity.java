@@ -33,7 +33,6 @@ public class OrderLookupActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private View scrollResult;
     private TextView tvResCode, tvResStatus, tvResItems, tvResTotal;
-    private Button btnCancelOrder;
     private OrderRepository orderRepository;
     private OrderResponse currentOrder;
 
@@ -53,11 +52,9 @@ public class OrderLookupActivity extends AppCompatActivity {
         tvResStatus = findViewById(R.id.tvLookupResultStatus);
         tvResItems = findViewById(R.id.tvLookupResultItems);
         tvResTotal = findViewById(R.id.tvLookupResultTotal);
-        btnCancelOrder = findViewById(R.id.btnLookupCancelOrder);
 
         btnBack.setOnClickListener(v -> finish());
         btnSearch.setOnClickListener(v -> performLookup());
-        btnCancelOrder.setOnClickListener(v -> cancelCurrentOrder());
     }
 
     private void performLookup() {
@@ -107,47 +104,17 @@ public class OrderLookupActivity extends AppCompatActivity {
         tvResTotal.setText(formatter.format(order.getTotalPrice()));
 
         currentOrder = order;
-        if (order.getStatus() == OrderStatus.PENDING || order.getStatus() == OrderStatus.PREPARING) {
-            btnCancelOrder.setVisibility(View.VISIBLE);
-        } else {
-            btnCancelOrder.setVisibility(View.GONE);
-        }
 
         scrollResult.setVisibility(View.VISIBLE);
     }
 
-    private void cancelCurrentOrder() {
-        if (currentOrder == null) return;
-        
-        btnCancelOrder.setEnabled(false);
-        orderRepository.cancelOrderGuest(currentOrder.getId())
-            .enqueue(new Callback<ApiResponse<OrderResponse>>() {
-                @Override
-                public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Response<ApiResponse<OrderResponse>> response) {
-                    btnCancelOrder.setEnabled(true);
-                    if (response.isSuccessful()) {
-                        Toast.makeText(OrderLookupActivity.this, "Đã hủy đơn hàng thành công", Toast.LENGTH_SHORT).show();
-                        performLookup();
-                    } else {
-                        Toast.makeText(OrderLookupActivity.this, "Không thể hủy đơn hàng (Mã: " + response.code() + ")", Toast.LENGTH_SHORT).show();
-                    }
-                }
-
-                @Override
-                public void onFailure(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Throwable t) {
-                    btnCancelOrder.setEnabled(true);
-                    Toast.makeText(OrderLookupActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            });
-    }
 
     private String mapStatusToVietnamese(OrderStatus status) {
         if (status == null) return "Không rõ";
         switch (status) {
             case PENDING: return "Đang chờ xử lý";
             case PREPARING: return "Đang chuẩn bị món";
-            case READY: return "Sẵn sàng - Mời nhận đồ";
-            case COMPLETED: return "Đã hoàn thành";
+            case COMPLETED: return "HOÀN THÀNH";
             case CANCELLED: return "Đã hủy đơn";
             default: return status.name();
         }

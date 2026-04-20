@@ -54,10 +54,11 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(orderService.updateStatus(id, status, currentUser.getId())));
     }
 
-    @PutMapping("/{id}/cancel-guest")
-    public ResponseEntity<ApiResponse<OrderResponse>> cancelOrderByGuest(
-            @PathVariable("id") Long id) {
-        return ResponseEntity.ok(ApiResponse.success(orderService.cancelOrderByGuest(id)));
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelOrder(
+            @PathVariable("id") Long id,
+            @AuthenticationPrincipal User currentUser) {
+        return ResponseEntity.ok(ApiResponse.success(orderService.cancelOrder(id, currentUser.getId())));
     }
 
 }

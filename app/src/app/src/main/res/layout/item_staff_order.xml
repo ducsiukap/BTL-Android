@@ -96,5 +96,16 @@
             android:text="Xác nhận thanh toán"
             app:backgroundTint="@color/brand_primary" />
 
+        <Button
+            android:id="@+id/btnStaffOrderCancel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Hủy đơn"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:textColor="@color/brand_error"
+            app:strokeColor="@color/brand_error"
+            android:visibility="gone" />
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>

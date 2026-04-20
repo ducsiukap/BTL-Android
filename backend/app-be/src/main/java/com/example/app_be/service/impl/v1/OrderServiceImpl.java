@@ -8,8 +8,6 @@ import com.example.app_be.core.exception.ResourceNotFoundException;
 import com.example.app_be.model.*;
 import com.example.app_be.repository.*;
 import com.example.app_be.service.OrderService;
-import com.example.app_be.service.VNPayService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -17,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -34,8 +32,6 @@ public class OrderServiceImpl implements OrderService {
     private final SaleOffRepository saleOffRepository;
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
-    private final VNPayService vnPayService;
-    private final HttpServletRequest httpServletRequest;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -77,11 +73,7 @@ public class OrderServiceImpl implements OrderService {
         // 4. Lưu vào Database
         Order savedOrder = orderRepository.save(order);
 
-        // 5. Tạo link thanh toán VNPay
-        String ipAddress = httpServletRequest.getRemoteAddr();
-        String paymentUrl = vnPayService.createPaymentUrl(savedOrder, ipAddress);
-
-        OrderResponse response = toOrderResponse(savedOrder, paymentUrl);
+        OrderResponse response = toOrderResponse(savedOrder);
 
         // [WS] Thông báo cho nhân viên có đơn hàng mới
         messagingTemplate.convertAndSend("/topic/staff/new-order", response);
@@ -93,7 +85,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse getOrderByCode(String code) {
         Order order = orderRepository.findByCodeContainingIgnoreCase(code.trim())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with code: " + code));
-        return toOrderResponse(order, null);
+        return toOrderResponse(order);
     }
 
     @Override
@@ -101,12 +93,12 @@ public class OrderServiceImpl implements OrderService {
         if (statuses != null && !statuses.isEmpty()) {
             return orderRepository.findByStatusInOrderByCreatedAtDesc(statuses)
                     .stream()
-                    .map(order -> toOrderResponse(order, null))
+                    .map(order -> toOrderResponse(order))
                     .collect(Collectors.toList());
         }
         return orderRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
-                .map(order -> toOrderResponse(order, null))
+                .map(order -> toOrderResponse(order))
                 .collect(Collectors.toList());
     }
 
@@ -127,7 +119,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(status);
         Order savedOrder = orderRepository.save(order);
-        OrderResponse response = toOrderResponse(savedOrder, null);
+        OrderResponse response = toOrderResponse(savedOrder);
 
         return response;
     }
@@ -147,7 +139,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.PREPARING);
         
         Order savedOrder = orderRepository.save(order);
-        OrderResponse response = toOrderResponse(savedOrder, null);
+        OrderResponse response = toOrderResponse(savedOrder);
         messagingTemplate.convertAndSend("/topic/order/" + savedOrder.getCode(), response);
         
         return response;
@@ -155,17 +147,39 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public OrderResponse cancelOrderByGuest(Long id) {
+    public OrderResponse cancelOrder(Long id, UUID staffId) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
-        // Kiểm tra logic hủy đơn
-        validateStatusTransition(order.getStatus(), OrderStatus.CANCELLED);
+        // Nhân viên hủy đơn
+        if (order.getUser() == null) {
+            User staff = userRepository.findById(staffId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Staff not found with id: " + staffId));
+            order.setUser(staff);
+        }
 
         order.setStatus(OrderStatus.CANCELLED);
         Order savedOrder = orderRepository.save(order);
-        return toOrderResponse(savedOrder,null);
+        
+        // Thông báo cho khách qua WS nếu đơn bị hủy
+        messagingTemplate.convertAndSend("/topic/order/" + savedOrder.getCode(), toOrderResponse(savedOrder));
+        
+        return toOrderResponse(savedOrder);
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelStaleOrders() {
+        Instant tenMinsAgo = Instant.now().minus(10, ChronoUnit.MINUTES);
+        List<Order> staleOrders = orderRepository.findByStatusAndCreatedAtBefore(OrderStatus.PENDING, tenMinsAgo);
+        
+        for (Order order : staleOrders) {
+            order.setStatus(OrderStatus.CANCELLED);
+            orderRepository.save(order);
+            messagingTemplate.convertAndSend("/topic/order/" + order.getCode(), toOrderResponse(order));
+        }
+    }
+
 
     private void validateStatusTransition(OrderStatus current, OrderStatus target) {
         if (current == target) return;
@@ -177,36 +191,23 @@ public class OrderServiceImpl implements OrderService {
         switch (target) {
             case PREPARING:
                 break;
-            case READY:
-                if (current != OrderStatus.PREPARING) {
-                    throw new IllegalStateException("Đơn hàng không thể chuyển sang SẴN SÀNG.");
-                }
-                break;
             case COMPLETED:
-                if (current != OrderStatus.READY) {
+                if (current != OrderStatus.PREPARING) {
                     throw new IllegalStateException("Đơn hàng không thể chuyển sang HOÀN THÀNH.");
                 }
                 break;
             case CANCELLED:
                 if (current != OrderStatus.PENDING && current != OrderStatus.PREPARING) {
-                    throw new IllegalStateException("Không thể hủy đơn hàng.");
+                    throw new IllegalStateException("Không thể hủy đơn hàng ở trạng thái này.");
                 }
                 break;
         }
     }
 
-    // Logic sinh mã đơn hàng
+    // Logic sinh mã đơn hàng: OD-xxx
     private String generateOrderCode() {
-        LocalDate now = LocalDate.now();
-        String datePart = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        YearMonth yearMonth = YearMonth.from(now);
-        Instant startOfMonth = yearMonth.atDay(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
-        Instant endOfMonth = yearMonth.atEndOfMonth().atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant();
-        
-        long count = orderRepository.countByCreatedAtBetween(startOfMonth, endOfMonth);
-        String sequencePart = String.format("%03d", count + 1);
-        
-        return "OD-" + datePart + "-" + sequencePart;
+        long count = orderRepository.count();
+        return String.format("OD-%03d", count + 1);
     }
 
     private BigDecimal calculateDiscountedPrice(Product product) {
@@ -218,7 +219,7 @@ public class OrderServiceImpl implements OrderService {
         return discountedPrice.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : discountedPrice;
     }
 
-    private OrderResponse toOrderResponse(Order order, String paymentUrl) {
+    private OrderResponse toOrderResponse(Order order) {
         List<OrderItemResponse> itemResponses = order.getItems().stream()
                 .map(item -> new OrderItemResponse(
                         item.getId(),
@@ -239,7 +240,6 @@ public class OrderServiceImpl implements OrderService {
                 order.getCreatedAt(),
                 order.getUser() != null ? order.getUser().getId() : null,
                 order.getUser() != null ? order.getUser().getFullName() : null,
-                paymentUrl,
                 itemResponses
         );
     }
