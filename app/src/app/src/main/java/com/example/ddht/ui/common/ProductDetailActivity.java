@@ -15,6 +15,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.ddht.R;
+import com.example.ddht.data.manager.CartManager;
+import com.example.ddht.data.model.Product;
 import com.example.ddht.data.remote.dto.ApiResponse;
 import com.example.ddht.data.remote.dto.ProductDto;
 import com.example.ddht.data.remote.dto.ProductImageDto;
@@ -125,7 +127,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         String imageUrl = (currentProduct.getImages() != null && !currentProduct.getImages().isEmpty())
                 ? currentProduct.getImages().get(0).getUrl() : null;
 
-        com.example.ddht.data.model.Product modelProduct = new com.example.ddht.data.model.Product(
+        Product modelProduct = new Product(
                 currentProduct.getId(),
                 currentProduct.getName(),
                 currentProduct.getDescription(),
@@ -135,7 +137,7 @@ public class ProductDetailActivity extends AppCompatActivity {
                 imageUrl
         );
 
-        com.example.ddht.data.manager.CartManager.getInstance().addProduct(modelProduct, selectedQuantity);
+        CartManager.getInstance().addProduct(modelProduct, selectedQuantity);
         Toast.makeText(this, "Đã thêm " + selectedQuantity + " " + modelProduct.getName() + " vào giỏ hàng", Toast.LENGTH_SHORT).show();
         finish();
     }
