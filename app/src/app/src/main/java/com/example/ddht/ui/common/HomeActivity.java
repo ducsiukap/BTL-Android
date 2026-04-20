@@ -70,6 +70,7 @@ public class HomeActivity extends AppCompatActivity {
     private final List<CatalogDto> catalogsCache = new ArrayList<>();
     private Long selectedCatalogId = null;
     private String currentQuery = "";
+    private com.example.ddht.data.remote.SimpleStompClient stompClient;
 
     // Order (Staff)
     private OrderRepository orderRepository;
@@ -215,6 +216,30 @@ public class HomeActivity extends AppCompatActivity {
         loadProducts(currentQuery);
         if (btnOrderFilter != null) {
             btnOrderFilter.setOnClickListener(v -> showFilterBottomSheet());
+        }
+
+        // Bắt đầu lắng nghe WebSocket nếu là nhân viên
+        if (isStaff) {
+            initStaffWebSocket();
+        }
+    }
+
+    private void initStaffWebSocket() {
+        String wsUrl = "ws://10.0.2.2:3333/ws-order";
+        stompClient = new com.example.ddht.data.remote.SimpleStompClient(wsUrl);
+        stompClient.connect();
+        stompClient.subscribe("/topic/staff/new-order", payload -> {
+            Toast.makeText(HomeActivity.this, "CÓ ĐƠN HÀNG MỚI!", Toast.LENGTH_LONG).show();
+            // Nếu đang ở màn hình đơn hàng thì reload ngay
+            loadStaffOrders();
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (stompClient != null) {
+            stompClient.disconnect();
         }
     }
 

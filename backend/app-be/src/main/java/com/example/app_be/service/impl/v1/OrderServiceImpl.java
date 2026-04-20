@@ -139,17 +139,18 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
         
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException("Chỉ có thể thanh toán cho đơn hàng đang ở trạng thái CHỜ (PENDING).");
+            throw new IllegalStateException("Đơn hàng đang ở trạng thái không thể thanh toán.");
         }
 
         order.setPaid(true);
         order.setPaymentTime(Instant.now());
-        
-        // Khi thanh toán xong, đơn hàng chuyển sang trạng thái đang làm
         order.setStatus(OrderStatus.PREPARING);
         
         Order savedOrder = orderRepository.save(order);
-        return toOrderResponse(savedOrder, null);
+        OrderResponse response = toOrderResponse(savedOrder, null);
+        messagingTemplate.convertAndSend("/topic/order/" + savedOrder.getCode(), response);
+        
+        return response;
     }
 
     @Override
@@ -169,7 +170,6 @@ public class OrderServiceImpl implements OrderService {
     private void validateStatusTransition(OrderStatus current, OrderStatus target) {
         if (current == target) return;
 
-        // Nếu đơn đã hủy hoặc đã hoàn thành thì không trạng thái
         if (current == OrderStatus.CANCELLED || current == OrderStatus.COMPLETED) {
             throw new IllegalStateException("Đơn hàng đã kết thúc, không thể đổi trạng thái.");
         }
@@ -179,17 +179,17 @@ public class OrderServiceImpl implements OrderService {
                 break;
             case READY:
                 if (current != OrderStatus.PREPARING) {
-                    throw new IllegalStateException("Đơn hàng đang ĐANG LÀM mới có thể chuyển sang SẴN SÀNG.");
+                    throw new IllegalStateException("Đơn hàng không thể chuyển sang SẴN SÀNG.");
                 }
                 break;
             case COMPLETED:
                 if (current != OrderStatus.READY) {
-                    throw new IllegalStateException("Đơn hàng SẴN SÀNG mới có thể chuyển sang HOÀN THÀNH.");
+                    throw new IllegalStateException("Đơn hàng không thể chuyển sang HOÀN THÀNH.");
                 }
                 break;
             case CANCELLED:
                 if (current != OrderStatus.PENDING && current != OrderStatus.PREPARING) {
-                    throw new IllegalStateException("Không thể hủy đơn hàng khi đã ở trạng thái SẴN SÀNG hoặc HOÀN THÀNH.");
+                    throw new IllegalStateException("Không thể hủy đơn hàng.");
                 }
                 break;
         }

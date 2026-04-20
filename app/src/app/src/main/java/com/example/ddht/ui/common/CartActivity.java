@@ -53,6 +53,8 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
     private ProgressBar progressBar;
     private OrderRepository orderRepository;
     private SessionManager sessionManager;
+    private AlertDialog successDialog;
+    private com.example.ddht.data.remote.SimpleStompClient stompClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,7 +152,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
             }
         }
 
-        builder.setNeutralButton(R.string.order_copy_code, (dialog, which) -> {
+        successDialog = builder.setNeutralButton(R.string.order_copy_code, (dialog, which) -> {
                     ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText("Order Code", code);
                     clipboard.setPrimaryClip(clip);
@@ -159,6 +161,28 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
                 })
                 .setPositiveButton(R.string.common_close, (dialog, which) -> finish())
                 .show();
+        initWebSocket(code);
+    }
+
+    private void initWebSocket(String orderCode) {
+        String wsUrl = "ws://10.0.2.2:3333/ws-order";
+        stompClient = new com.example.ddht.data.remote.SimpleStompClient(wsUrl);
+        stompClient.connect();
+        stompClient.subscribe("/topic/order/" + orderCode, payload -> {
+            if (successDialog != null && successDialog.isShowing()) {
+                successDialog.dismiss();
+                Toast.makeText(CartActivity.this, "Thanh toán thành công!", Toast.LENGTH_LONG).show();
+                finish();
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (stompClient != null) {
+            stompClient.disconnect();
+        }
     }
 
     private Bitmap generateQrCode(String data) {
