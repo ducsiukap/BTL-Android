@@ -1,9 +1,13 @@
 package com.example.ddht.ui.common;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.graphics.Rect;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.inputmethod.EditorInfo;
@@ -21,8 +25,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import android.widget.CheckBox;
 
 import com.example.ddht.R;
 import com.example.ddht.data.manager.CartManager;
@@ -31,11 +33,10 @@ import com.example.ddht.data.remote.dto.ApiResponse;
 import com.example.ddht.data.remote.dto.CatalogDto;
 import com.example.ddht.data.remote.dto.ChatMessageDto;
 import com.example.ddht.data.remote.dto.ChatResponse;
-import com.example.ddht.data.remote.dto.OrderItemResponse;
 import com.example.ddht.data.remote.dto.OrderResponse;
 import com.example.ddht.data.remote.dto.OrderStatus;
 import com.example.ddht.data.remote.dto.ProductDto;
-import com.example.ddht.data.remote.dto.ProductImageDto;
+import com.example.ddht.data.remote.dto.VoiceChatResponse;
 import com.example.ddht.data.repository.CatalogRepository;
 import com.example.ddht.data.repository.ChatRepository;
 import com.example.ddht.data.repository.OrderRepository;
@@ -44,21 +45,26 @@ import com.example.ddht.ui.common.adapter.ChatAdapter;
 import com.example.ddht.ui.common.adapter.ProductAdapter;
 import com.example.ddht.ui.common.adapter.StaffOrderAdapter;
 import com.example.ddht.ui.common.fragment.AccountFragment;
+import com.example.ddht.ui.manager.ProductDetailActivity;
 import com.example.ddht.utils.SessionManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.tabs.TabLayout;
 
-import java.text.NumberFormat;
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class HomeActivity extends AppCompatActivity {
+    private static final String TAG = "HomeActivity";
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 1201;
     private SessionManager sessionManager;
     private CatalogRepository catalogRepository;
     private ProductRepository productRepository;
@@ -70,16 +76,16 @@ public class HomeActivity extends AppCompatActivity {
     private final List<CatalogDto> catalogsCache = new ArrayList<>();
     private Long selectedCatalogId = null;
     private String currentQuery = "";
-    private com.example.ddht.data.remote.SimpleStompClient stompClient;
+    private String chatSessionId = null; // Duy trì session_id từ AI server
+    private boolean isVoiceRecording = false;
+    private MediaRecorder voiceRecorder;
+    private File voiceTempFile;
+    private ChatAdapter activeChatAdapter;
+    private RecyclerView activeChatRecycler;
+    private ImageButton activeVoiceButton;
 
-    // Order (Staff)
     private OrderRepository orderRepository;
     private StaffOrderAdapter staffOrderAdapter;
-    private Button btnOrderFilter;
-    private final List<String> selectedStatuses = new ArrayList<>();
-    private final String[] statusLabels = {"CHỜ THANH TOÁN", "ĐANG CHẾ BIẾN", "HOÀN THÀNH", "ĐÃ HỦY"};
-    private final String[] statusValues = {"PENDING", "PREPARING", "COMPLETED", "CANCELLED"};
-    private final boolean[] checkedItems = {false, false, false, false};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,14 +106,12 @@ public class HomeActivity extends AppCompatActivity {
         TextView tvWelcome = findViewById(R.id.tvWelcome);
         tvProductsError = findViewById(R.id.tvProductsError);
         layoutCatalogFilters = findViewById(R.id.layoutCatalogFilters);
-        btnOrderFilter = findViewById(R.id.btnOrderFilter);
         LinearLayout layoutProducts = findViewById(R.id.layoutHomeProducts);
         android.widget.FrameLayout layoutAccount = findViewById(R.id.layoutHomeAccount);
         LinearLayout layoutOrders = findViewById(R.id.layoutHomeOrders);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottomNavigation);
         FloatingActionButton fabChatBot = findViewById(R.id.fabChatBot);
 
-        // Products RecyclerView
         rvProducts.setLayoutManager(new GridLayoutManager(this, 2));
         int spacingPx = dpToPx(8);
         if (rvProducts.getItemDecorationCount() == 0) {
@@ -122,10 +126,9 @@ public class HomeActivity extends AppCompatActivity {
         });
         rvProducts.setAdapter(productAdapter);
 
-        // Staff Orders RecyclerView
         RecyclerView rvStaffOrders = findViewById(R.id.rvStaffOrders);
         if (rvStaffOrders != null) {
-            rvStaffOrders.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+            rvStaffOrders.setLayoutManager(new LinearLayoutManager(this));
             staffOrderAdapter = new StaffOrderAdapter(new StaffOrderAdapter.OnOrderActionListener() {
                 @Override
                 public void onUpdateStatus(OrderResponse order, OrderStatus nextStatus) {
@@ -144,12 +147,10 @@ public class HomeActivity extends AppCompatActivity {
 
                 @Override
                 public void onItemClick(OrderResponse order) {
-                    showOrderDetailDialog(order);
                 }
             });
             rvStaffOrders.setAdapter(staffOrderAdapter);
         }
-        
 
         btnSearchProducts.setOnClickListener(v -> searchProducts());
         edtProductSearch.setOnEditorActionListener((v, actionId, event) -> {
@@ -173,9 +174,7 @@ public class HomeActivity extends AppCompatActivity {
             bottomNavigationView.getMenu().findItem(R.id.nav_orders).setVisible(isStaff);
         }
 
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.layoutHomeAccount, new AccountFragment())
-                .commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.layoutHomeAccount, new AccountFragment()).commit();
 
         bottomNavigationView.setSelectedItemId(R.id.nav_products);
         bottomNavigationView.setOnItemSelectedListener(item -> {
@@ -204,85 +203,47 @@ public class HomeActivity extends AppCompatActivity {
             return false;
         });
 
-        btnOpenCart.setOnClickListener(v -> {
-            Intent intent = new Intent(this, CartActivity.class);
-            startActivity(intent);
-        });
-        
+        btnOpenCart.setOnClickListener(v -> startActivity(new Intent(this, CartActivity.class)));
         btnCreateOrder.setText(R.string.order_lookup_title);
-        btnCreateOrder.setOnClickListener(v -> {
-            Intent intent = new Intent(this, OrderLookupActivity.class);
-            startActivity(intent);
-        });
+        btnCreateOrder.setOnClickListener(v -> startActivity(new Intent(this, OrderLookupActivity.class)));
 
         fabChatBot.setOnClickListener(v -> showChatBotDialog());
 
         loadCatalogs();
         loadProducts(currentQuery);
-        if (btnOrderFilter != null) {
-            btnOrderFilter.setOnClickListener(v -> showFilterBottomSheet());
-        }
-
-        // Bắt đầu lắng nghe WebSocket nếu là nhân viên
-        if (isStaff) {
-            initStaffWebSocket();
-        }
-    }
-
-    private void initStaffWebSocket() {
-        String wsUrl = "ws://10.0.2.2:3333/ws-order";
-        stompClient = new com.example.ddht.data.remote.SimpleStompClient(wsUrl);
-        stompClient.connect();
-        stompClient.subscribe("/topic/staff/new-order", payload -> {
-            Toast.makeText(HomeActivity.this, "CÓ ĐƠN HÀNG MỚI!", Toast.LENGTH_LONG).show();
-            // Nếu đang ở màn hình đơn hàng thì reload ngay
-            loadStaffOrders();
-        });
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (stompClient != null) {
-            stompClient.disconnect();
-        }
     }
 
     private void showChatBotDialog() {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_chat_bot, null);
         RecyclerView rvChatHistory = dialogView.findViewById(R.id.rvChatHistory);
         EditText edtChatMessage = dialogView.findViewById(R.id.edtChatMessage);
+        ImageButton btnVoiceChat = dialogView.findViewById(R.id.btnVoiceChat);
         ImageButton btnSendChat = dialogView.findViewById(R.id.btnSendChat);
+        ImageButton btnGoToCart = dialogView.findViewById(R.id.btnChatGoToCart);
 
         ChatAdapter chatAdapter = new ChatAdapter();
         rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
         rvChatHistory.setAdapter(chatAdapter);
 
-        chatAdapter.addMessage(new ChatMessageDto("Xin chào! Tôi là trợ lý ảo. Bạn hãy chọn gợi ý hoặc nhập nội dung để tôi hỗ trợ nhé!", false));
+        chatAdapter.addMessage(new ChatMessageDto(
+                "Xin chào! Tôi là trợ lý ảo. Bạn hãy chọn gợi ý hoặc nhập nội dung để tôi hỗ trợ nhé!", false));
 
-        // Xử lý gửi tin nhắn thủ công
+        btnGoToCart.setOnClickListener(v -> startActivity(new Intent(this, CartActivity.class)));
+
         View.OnClickListener sendListener = v -> {
             String msg = edtChatMessage.getText().toString().trim();
-            if (TextUtils.isEmpty(msg)) return;
-
+            if (TextUtils.isEmpty(msg))
+                return;
             chatAdapter.addMessage(new ChatMessageDto(msg, true));
             edtChatMessage.setText("");
             rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
             sendChatMessage(msg, chatAdapter, rvChatHistory);
         };
         btnSendChat.setOnClickListener(sendListener);
-        edtChatMessage.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEND) {
-                sendListener.onClick(btnSendChat);
-                return true;
-            }
-            return false;
-        });
+        btnVoiceChat.setOnClickListener(v -> handleVoiceChatButton(chatAdapter, rvChatHistory, btnVoiceChat));
 
-        // Xử lý nút gợi ý
         View.OnClickListener suggestListener = v -> {
-            Button b = (Button) v;
-            String msg = b.getText().toString();
+            String msg = ((Button) v).getText().toString();
             chatAdapter.addMessage(new ChatMessageDto(msg, true));
             rvChatHistory.smoothScrollToPosition(chatAdapter.getItemCount() - 1);
             sendChatMessage(msg, chatAdapter, rvChatHistory);
@@ -293,166 +254,259 @@ public class HomeActivity extends AppCompatActivity {
         dialogView.findViewById(R.id.btnChatSuggestPrice).setOnClickListener(suggestListener);
         dialogView.findViewById(R.id.btnChatSuggestAddToCart).setOnClickListener(suggestListener);
 
-        new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .setPositiveButton("Đóng", null)
-                .show();
+        AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).setPositiveButton("Đóng", null).create();
+        dialog.setOnDismissListener(d -> {
+            if (isVoiceRecording && voiceRecorder != null) {
+                try {
+                    voiceRecorder.stop();
+                } catch (RuntimeException ignored) {
+                }
+            }
+            resetVoiceRecorder();
+            cleanupVoiceTempFile();
+            isVoiceRecording = false;
+            activeChatAdapter = null;
+            activeChatRecycler = null;
+            activeVoiceButton = null;
+        });
+        dialog.show();
     }
 
     private void sendChatMessage(String msg, ChatAdapter adapter, RecyclerView rv) {
-        chatRepository.sendMessage(msg).enqueue(new Callback<ApiResponse<ChatResponse>>() {
+        chatRepository.sendMessage(msg, chatSessionId).enqueue(new Callback<ChatResponse>() {
             @Override
-            public void onResponse(Call<ApiResponse<ChatResponse>> call, Response<ApiResponse<ChatResponse>> response) {
-                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
-                    ChatResponse chatData = response.body().getData();
+            public void onResponse(Call<ChatResponse> call, Response<ChatResponse> response) {
+                Log.d(TAG, "Chat HTTP Status: " + response.code());
+                if (response.isSuccessful() && response.body() != null) {
+                    ChatResponse chatData = response.body();
+                    // Lưu lại session_id cho các lần chat kế tiếp
+                    chatSessionId = chatData.getSessionId();
+
+                    Log.d(TAG, "Bot Response: " + chatData.getResponse());
                     adapter.addMessage(new ChatMessageDto(chatData.getResponse(), false));
                     rv.smoothScrollToPosition(adapter.getItemCount() - 1);
-
-                    if (chatData.getActions() != null) {
-                        for (ChatResponse.Action action : chatData.getActions()) {
-                            handleBotAction(action);
-                        }
-                    }
-
-                    if (chatData.getProducts() != null && !chatData.getProducts().isEmpty()) {
-                        List<Product> mapped = mapProducts(chatData.getProducts());
-                        productAdapter.submit(mapped);
-                    }
+                } else {
+                    Log.e(TAG, "Chat response failed: " + response.message());
+                    adapter.addMessage(new ChatMessageDto("Bot không phản hồi. Vui lòng thử lại sau.", false));
                 }
             }
-            @Override public void onFailure(Call<ApiResponse<ChatResponse>> call, Throwable t) {
-                adapter.addMessage(new ChatMessageDto("Lỗi kết nối chatbot.", false));
+
+            @Override
+            public void onFailure(Call<ChatResponse> call, Throwable t) {
+                Log.e(TAG, "Network Error to AI Server: ", t);
+                adapter.addMessage(new ChatMessageDto("Lỗi kết nối tới trợ lý ảo.", false));
+                rv.smoothScrollToPosition(adapter.getItemCount() - 1);
             }
         });
     }
 
-    private void handleBotAction(ChatResponse.Action action) {
-        String type = action.getType();
-        if (TextUtils.isEmpty(type)) return;
+    private void handleVoiceChatButton(ChatAdapter adapter, RecyclerView rv, ImageButton button) {
+        activeChatAdapter = adapter;
+        activeChatRecycler = rv;
+        activeVoiceButton = button;
 
-        switch (type.toUpperCase()) {
-            case "SEARCH":
-                if (!TextUtils.isEmpty(action.getSearchQuery())) {
-                    edtProductSearch.setText(action.getSearchQuery());
-                    currentQuery = action.getSearchQuery();
-                    loadProducts(currentQuery);
-                }
-                break;
-            case "ADD_TO_CART":
-                if (action.getProductId() != null) {
-                    productRepository.getProductById(action.getProductId()).enqueue(new Callback<ApiResponse<ProductDto>>() {
-                        @Override
-                        public void onResponse(Call<ApiResponse<ProductDto>> call, Response<ApiResponse<ProductDto>> response) {
-                            if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
-                                Product model = mapDtoToProduct(response.body().getData());
-                                CartManager.getInstance().addProduct(model, action.getQuantity() != null ? action.getQuantity() : 1);
-                                Toast.makeText(HomeActivity.this, "Đã thêm " + model.getName() + " vào giỏ hàng", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                        @Override public void onFailure(Call<ApiResponse<ProductDto>> call, Throwable t) {}
-                    });
-                }
-                break;
+        if (!isVoiceRecording) {
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[] { Manifest.permission.RECORD_AUDIO },
+                        REQUEST_RECORD_AUDIO_PERMISSION);
+                return;
+            }
+            startVoiceRecording();
+            return;
         }
+
+        stopVoiceRecordingAndSend();
+    }
+
+    private void startVoiceRecording() {
+        try {
+            voiceTempFile = File.createTempFile("voice_chat_", ".m4a", getCacheDir());
+            voiceRecorder = new MediaRecorder();
+            voiceRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+            voiceRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+            voiceRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            voiceRecorder.setAudioSamplingRate(16000);
+            voiceRecorder.setAudioEncodingBitRate(64000);
+            voiceRecorder.setOutputFile(voiceTempFile.getAbsolutePath());
+            voiceRecorder.prepare();
+            voiceRecorder.start();
+
+            isVoiceRecording = true;
+            if (activeVoiceButton != null) {
+                activeVoiceButton.setColorFilter(getColor(android.R.color.holo_red_dark));
+            }
+            Toast.makeText(this, "Đang ghi âm... Bấm lại để gửi", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start voice recording", e);
+            resetVoiceRecorder();
+            cleanupVoiceTempFile();
+            isVoiceRecording = false;
+            Toast.makeText(this, "Không thể bắt đầu ghi âm", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void stopVoiceRecordingAndSend() {
+        if (voiceRecorder != null) {
+            try {
+                voiceRecorder.stop();
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Failed to stop recording cleanly", e);
+            }
+        }
+
+        resetVoiceRecorder();
+        isVoiceRecording = false;
+        if (activeVoiceButton != null) {
+            activeVoiceButton.clearColorFilter();
+        }
+
+        if (voiceTempFile == null || !voiceTempFile.exists() || voiceTempFile.length() == 0) {
+            cleanupVoiceTempFile();
+            Toast.makeText(this, "Không có dữ liệu ghi âm", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        final File uploadFile = voiceTempFile;
+
+        if (activeChatAdapter != null) {
+            activeChatAdapter.addMessage(new ChatMessageDto("Đang xử lý giọng nói...", false));
+            if (activeChatRecycler != null) {
+                activeChatRecycler.smoothScrollToPosition(activeChatAdapter.getItemCount() - 1);
+            }
+        }
+
+        chatRepository.voiceChat(uploadFile, chatSessionId).enqueue(new Callback<VoiceChatResponse>() {
+            @Override
+            public void onResponse(Call<VoiceChatResponse> call, Response<VoiceChatResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    VoiceChatResponse voiceData = response.body();
+                    if (!TextUtils.isEmpty(voiceData.getSessionId())) {
+                        chatSessionId = voiceData.getSessionId();
+                    }
+
+                    String transcript = !TextUtils.isEmpty(voiceData.getCorrectedText())
+                            ? voiceData.getCorrectedText()
+                            : voiceData.getOriginalText();
+
+                    if (!TextUtils.isEmpty(transcript) && activeChatAdapter != null) {
+                        activeChatAdapter.addMessage(new ChatMessageDto(transcript, true));
+                    }
+
+                    String botReply = TextUtils.isEmpty(voiceData.getResponse())
+                            ? "Mình chưa xử lý được yêu cầu thoại, bạn thử lại nhé."
+                            : voiceData.getResponse();
+
+                    if (activeChatAdapter != null) {
+                        activeChatAdapter.addMessage(new ChatMessageDto(botReply, false));
+                        if (activeChatRecycler != null) {
+                            activeChatRecycler.smoothScrollToPosition(activeChatAdapter.getItemCount() - 1);
+                        }
+                    }
+                } else if (activeChatAdapter != null) {
+                    activeChatAdapter.addMessage(new ChatMessageDto("Không thể xử lý giọng nói lúc này.", false));
+                }
+
+                cleanupVoiceTempFile();
+            }
+
+            @Override
+            public void onFailure(Call<VoiceChatResponse> call, Throwable t) {
+                Log.e(TAG, "Voice chat failed", t);
+                if (activeChatAdapter != null) {
+                    activeChatAdapter.addMessage(new ChatMessageDto("Lỗi kết nối voice chat.", false));
+                    if (activeChatRecycler != null) {
+                        activeChatRecycler.smoothScrollToPosition(activeChatAdapter.getItemCount() - 1);
+                    }
+                }
+                cleanupVoiceTempFile();
+            }
+        });
+    }
+
+    private void resetVoiceRecorder() {
+        if (voiceRecorder == null) {
+            return;
+        }
+        voiceRecorder.reset();
+        voiceRecorder.release();
+        voiceRecorder = null;
+    }
+
+    private void cleanupVoiceTempFile() {
+        if (voiceTempFile == null) {
+            return;
+        }
+        if (voiceTempFile.exists()) {
+            // noinspection ResultOfMethodCallIgnored
+            voiceTempFile.delete();
+        }
+        voiceTempFile = null;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != REQUEST_RECORD_AUDIO_PERMISSION) {
+            return;
+        }
+
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startVoiceRecording();
+            return;
+        }
+
+        Toast.makeText(this, "Bạn cần cấp quyền micro để dùng voice chat", Toast.LENGTH_SHORT).show();
     }
 
     private Product mapDtoToProduct(ProductDto dto) {
         double originalPrice = dto.getOriginalPrice() == null ? 0 : dto.getOriginalPrice();
         double displayPrice = dto.getDiscountedPrice() == null ? originalPrice : dto.getDiscountedPrice();
-        String imageUrl = (dto.getImages() != null && !dto.getImages().isEmpty()) ? dto.getImages().get(0).getUrl() : null;
-        return new Product(dto.getId(), dto.getName(), dto.getDescription(), displayPrice, originalPrice, Boolean.TRUE.equals(dto.getSaleOff()), imageUrl);
+        String imageUrl = (dto.getImages() != null && !dto.getImages().isEmpty()) ? dto.getImages().get(0).getUrl()
+                : null;
+        return new Product(dto.getId(), dto.getName(), dto.getDescription(), displayPrice, originalPrice,
+                Boolean.TRUE.equals(dto.getSaleOff()), imageUrl);
     }
 
     private void loadStaffOrders() {
-        if (staffOrderAdapter == null) return;
-        
+        if (staffOrderAdapter == null)
+            return;
         String token = "Bearer " + sessionManager.getAccessToken();
-        orderRepository.getStaffQueueOrders(token, selectedStatuses).enqueue(new Callback<ApiResponse<List<OrderResponse>>>() {
-            @Override
-            public void onResponse(@NonNull Call<ApiResponse<List<OrderResponse>>> call, 
-                                   @NonNull Response<ApiResponse<List<OrderResponse>>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    staffOrderAdapter.submitList(response.body().getData());
-                }
-            }
+        orderRepository.getStaffQueueOrders(token, Arrays.asList("PENDING", "PREPARING"))
+                .enqueue(new Callback<ApiResponse<List<OrderResponse>>>() {
+                    @Override
+                    public void onResponse(@NonNull Call<ApiResponse<List<OrderResponse>>> call,
+                            @NonNull Response<ApiResponse<List<OrderResponse>>> response) {
+                        if (response.isSuccessful() && response.body() != null)
+                            staffOrderAdapter.submitList(response.body().getData());
+                    }
 
-            @Override
-            public void onFailure(@NonNull Call<ApiResponse<List<OrderResponse>>> call, @NonNull Throwable t) {
-                Toast.makeText(HomeActivity.this, "Lỗi tải đơn hàng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    private void showFilterBottomSheet() {
-        BottomSheetDialog dialog = new BottomSheetDialog(this);
-        View view = getLayoutInflater().inflate(R.layout.layout_filter_order_status, null);
-        LinearLayout container = view.findViewById(R.id.layoutFilterContainer);
-        
-        CheckBox[] checkBoxes = new CheckBox[statusLabels.length];
-        for (int i = 0; i < statusLabels.length; i++) {
-            CheckBox cb = new CheckBox(this);
-            cb.setText(statusLabels[i]);
-            cb.setChecked(checkedItems[i]);
-            cb.setTag(i);
-            cb.setPadding(0, 16, 0, 16);
-            cb.setTextSize(16);
-            container.addView(cb);
-            checkBoxes[i] = cb;
-        }
-
-        view.findViewById(R.id.btnFilterApply).setOnClickListener(v -> {
-            selectedStatuses.clear();
-            int count = 0;
-            for (int i = 0; i < checkBoxes.length; i++) {
-                checkedItems[i] = checkBoxes[i].isChecked();
-                if (checkedItems[i]) {
-                    selectedStatuses.add(statusValues[i]);
-                    count++;
-                }
-            }
-            
-            if (count == 0 || count == statusValues.length) {
-                btnOrderFilter.setText("Lọc: Tất cả");
-            } else {
-                btnOrderFilter.setText("Lọc (" + count + ")");
-            }
-            
-            loadStaffOrders();
-            dialog.dismiss();
-        });
-
-        view.findViewById(R.id.btnFilterReset).setOnClickListener(v -> {
-            for (int i = 0; i < checkedItems.length; i++) {
-                checkedItems[i] = false;
-                checkBoxes[i].setChecked(false);
-            }
-            selectedStatuses.clear();
-            btnOrderFilter.setText("Lọc: Tất cả");
-            loadStaffOrders();
-            dialog.dismiss();
-        });
-
-        dialog.setContentView(view);
-        dialog.show();
+                    @Override
+                    public void onFailure(@NonNull Call<ApiResponse<List<OrderResponse>>> call, @NonNull Throwable t) {
+                        Toast.makeText(HomeActivity.this, "Lỗi tải đơn hàng: " + t.getMessage(), Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                });
     }
 
     private void updateStaffOrderStatus(Long orderId, String status) {
         String token = "Bearer " + sessionManager.getAccessToken();
         orderRepository.updateOrderStatus(orderId, status, token).enqueue(new Callback<ApiResponse<OrderResponse>>() {
             @Override
-            public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, 
-                                   @NonNull Response<ApiResponse<OrderResponse>> response) {
+            public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call,
+                    @NonNull Response<ApiResponse<OrderResponse>> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(HomeActivity.this, "Cập nhật trạng thái thành công", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(HomeActivity.this, "Cập nhật thành công", Toast.LENGTH_SHORT).show();
                     loadStaffOrders();
-                } else {
-                    Toast.makeText(HomeActivity.this, "Lỗi " + response.code() + ": Không thể cập nhật trạng thái", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Throwable t) {
-                Toast.makeText(HomeActivity.this, "Lỗi cập nhật: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(HomeActivity.this, "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -461,19 +515,17 @@ public class HomeActivity extends AppCompatActivity {
         String token = "Bearer " + sessionManager.getAccessToken();
         orderRepository.markAsPaid(orderId, token).enqueue(new Callback<ApiResponse<OrderResponse>>() {
             @Override
-            public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, 
-                                   @NonNull Response<ApiResponse<OrderResponse>> response) {
+            public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call,
+                    @NonNull Response<ApiResponse<OrderResponse>> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(HomeActivity.this, "Đã xác nhận thanh toán", Toast.LENGTH_SHORT).show();
                     loadStaffOrders();
-                } else {
-                    Toast.makeText(HomeActivity.this, "Lỗi: Không thể xác nhận thanh toán", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Throwable t) {
-                Toast.makeText(HomeActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(HomeActivity.this, "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -482,23 +534,20 @@ public class HomeActivity extends AppCompatActivity {
         String token = "Bearer " + sessionManager.getAccessToken();
         orderRepository.cancelOrder(orderId, token).enqueue(new Callback<ApiResponse<OrderResponse>>() {
             @Override
-            public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call, 
-                                   @NonNull Response<ApiResponse<OrderResponse>> response) {
+            public void onResponse(@NonNull Call<ApiResponse<OrderResponse>> call,
+                    @NonNull Response<ApiResponse<OrderResponse>> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(HomeActivity.this, "Đã hủy đơn hàng", Toast.LENGTH_SHORT).show();
                     loadStaffOrders();
-                } else {
-                    Toast.makeText(HomeActivity.this, "Lỗi: Không thể hủy đơn hàng", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ApiResponse<OrderResponse>> call, @NonNull Throwable t) {
-                Toast.makeText(HomeActivity.this, "Lỗi kết nối: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(HomeActivity.this, "Lỗi: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
-
 
     private void searchProducts() {
         currentQuery = edtProductSearch.getText() == null ? "" : edtProductSearch.getText().toString().trim();
@@ -506,55 +555,35 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void loadProducts(String query) {
-        clearProductsError();
-        productRepository.searchProducts(query, selectedCatalogId, 0, 50).enqueue(new Callback<ApiResponse<List<ProductDto>>>() {
-            @Override
-            public void onResponse(@NonNull Call<ApiResponse<List<ProductDto>>> call,
-                                   @NonNull Response<ApiResponse<List<ProductDto>>> response) {
-                if (!response.isSuccessful() || response.body() == null || response.body().getData() == null) {
-                    showProductsError(getString(R.string.home_products_load_failed));
-                    productAdapter.submit(new ArrayList<>());
-                    return;
-                }
-
-                List<Product> mappedProducts = mapProducts(response.body().getData());
-                productAdapter.submit(mappedProducts);
-                if (mappedProducts.isEmpty()) {
-                    showProductsError(getString(R.string.home_products_empty));
-                }
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<ApiResponse<List<ProductDto>>> call, @NonNull Throwable throwable) {
-                showProductsError(getString(R.string.network_error, throwable.getMessage()));
-                productAdapter.submit(new ArrayList<>());
-            }
-        });
-    }
-
-    private List<Product> mapProducts(List<ProductDto> dtoList) {
-        List<Product> mapped = new ArrayList<>();
-        for (ProductDto dto : dtoList) {
-            if (dto == null) {
-                continue;
-            }
-            mapped.add(mapDtoToProduct(dto));
-        }
-        return mapped;
-    }
-
-    private void showProductsError(String message) {
-        tvProductsError.setText(message);
-        tvProductsError.setVisibility(View.VISIBLE);
-    }
-
-    private void clearProductsError() {
-        tvProductsError.setText("");
         tvProductsError.setVisibility(View.GONE);
-    }
+        productRepository.searchProducts(query, selectedCatalogId, 0, 50)
+                .enqueue(new Callback<ApiResponse<List<ProductDto>>>() {
+                    @Override
+                    public void onResponse(@NonNull Call<ApiResponse<List<ProductDto>>> call,
+                            @NonNull Response<ApiResponse<List<ProductDto>>> response) {
+                        if (!response.isSuccessful() || response.body() == null || response.body().getData() == null) {
+                            tvProductsError.setText(R.string.home_products_load_failed);
+                            tvProductsError.setVisibility(View.VISIBLE);
+                            productAdapter.submit(new ArrayList<>());
+                            return;
+                        }
+                        List<Product> mapped = new ArrayList<>();
+                        for (ProductDto dto : response.body().getData())
+                            mapped.add(mapDtoToProduct(dto));
+                        productAdapter.submit(mapped);
+                        if (mapped.isEmpty()) {
+                            tvProductsError.setText(R.string.home_products_empty);
+                            tvProductsError.setVisibility(View.VISIBLE);
+                        }
+                    }
 
-    private int dpToPx(int dp) {
-        return Math.round(dp * getResources().getDisplayMetrics().density);
+                    @Override
+                    public void onFailure(@NonNull Call<ApiResponse<List<ProductDto>>> call, @NonNull Throwable t) {
+                        tvProductsError.setText(getString(R.string.network_error, t.getMessage()));
+                        tvProductsError.setVisibility(View.VISIBLE);
+                        productAdapter.submit(new ArrayList<>());
+                    }
+                });
     }
 
     private void loadCatalogs() {
@@ -562,18 +591,16 @@ public class HomeActivity extends AppCompatActivity {
         catalogRepository.getAllCatalogs().enqueue(new Callback<ApiResponse<List<CatalogDto>>>() {
             @Override
             public void onResponse(@NonNull Call<ApiResponse<List<CatalogDto>>> call,
-                                   @NonNull Response<ApiResponse<List<CatalogDto>>> response) {
-                if (!response.isSuccessful() || response.body() == null || response.body().getData() == null) {
-                    return;
+                    @NonNull Response<ApiResponse<List<CatalogDto>>> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                    catalogsCache.clear();
+                    catalogsCache.addAll(response.body().getData());
+                    renderCatalogChips();
                 }
-                catalogsCache.clear();
-                catalogsCache.addAll(response.body().getData());
-                renderCatalogChips();
             }
 
             @Override
-            public void onFailure(@NonNull Call<ApiResponse<List<CatalogDto>>> call, @NonNull Throwable throwable) {
-                // Keep default filter only when catalog API is unavailable.
+            public void onFailure(@NonNull Call<ApiResponse<List<CatalogDto>>> call, @NonNull Throwable t) {
             }
         });
     }
@@ -581,15 +608,12 @@ public class HomeActivity extends AppCompatActivity {
     private void renderCatalogChips() {
         layoutCatalogFilters.removeAllViews();
         addCatalogChip(getString(R.string.home_catalog_all), null, selectedCatalogId == null);
-        for (CatalogDto catalog : catalogsCache) {
-            if (catalog == null || catalog.getId() == null || TextUtils.isEmpty(catalog.getName())) {
-                continue;
-            }
-            addCatalogChip(catalog.getName(), catalog.getId(), catalog.getId().equals(selectedCatalogId));
-        }
+        for (CatalogDto c : catalogsCache)
+            if (c != null && c.getId() != null)
+                addCatalogChip(c.getName(), c.getId(), c.getId().equals(selectedCatalogId));
     }
 
-    private void addCatalogChip(String label, Long catalogId, boolean selected) {
+    private void addCatalogChip(String label, Long id, boolean selected) {
         TextView chip = new TextView(this);
         chip.setText(label);
         chip.setSelected(selected);
@@ -597,102 +621,39 @@ public class HomeActivity extends AppCompatActivity {
         chip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         chip.setTextColor(getColor(selected ? android.R.color.white : R.color.brand_primary));
         chip.setPadding(dpToPx(12), dpToPx(8), dpToPx(12), dpToPx(8));
-
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        params.setMarginEnd(dpToPx(8));
-        chip.setLayoutParams(params);
-
+        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, -2);
+        p.setMarginEnd(dpToPx(8));
+        chip.setLayoutParams(p);
         chip.setOnClickListener(v -> {
-            selectedCatalogId = catalogId;
+            selectedCatalogId = id;
             renderCatalogChips();
             loadProducts(currentQuery);
         });
-
         layoutCatalogFilters.addView(chip);
     }
 
+    private int dpToPx(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
 
     private static class GridSpacingItemDecoration extends RecyclerView.ItemDecoration {
-        private final int spanCount;
-        private final int spacing;
+        private final int span, space;
 
-        GridSpacingItemDecoration(int spanCount, int spacing) {
-            this.spanCount = spanCount;
-            this.spacing = spacing;
+        GridSpacingItemDecoration(int span, int space) {
+            this.span = span;
+            this.space = space;
         }
 
         @Override
-        public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-            int position = parent.getChildAdapterPosition(view);
-            int column = position % spanCount;
-            outRect.left = spacing - column * spacing / spanCount;
-            outRect.right = (column + 1) * spacing / spanCount;
-            if (position < spanCount) {
-                outRect.top = spacing;
-            }
-        }
-    }
-
-    private void showOrderDetailDialog(OrderResponse order) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View dialogView = getLayoutInflater().inflate(R.layout.layout_dialog_order_detail, null);
-        
-        TextView tvCode = dialogView.findViewById(R.id.tvDialogOrderCode);
-        TextView tvStatus = dialogView.findViewById(R.id.tvDialogOrderStatus);
-        TextView tvTotal = dialogView.findViewById(R.id.tvDialogOrderTotal);
-        LinearLayout itemsContainer = dialogView.findViewById(R.id.layoutDialogOrderItems);
-        Button btnClose = dialogView.findViewById(R.id.btnDialogOrderClose);
-
-        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
-        
-        tvCode.setText("#" + (order.getCode() != null ? order.getCode() : order.getId().toString()));
-        tvStatus.setText(mapOrderStatusToString(order.getStatus()));
-        tvTotal.setText(formatter.format(order.getTotalPrice()));
-
-        if (order.getItems() != null) {
-            for (OrderItemResponse item : order.getItems()) {
-                View itemView = getLayoutInflater().inflate(R.layout.item_dialog_order_detail, itemsContainer, false);
-                TextView tvQty = itemView.findViewById(R.id.tvOrderItemQty);
-                TextView tvName = itemView.findViewById(R.id.tvOrderItemName);
-                TextView tvPrice = itemView.findViewById(R.id.tvOrderItemPrice);
-                TextView tvSubtotal = itemView.findViewById(R.id.tvOrderItemSubtotal);
-
-                tvQty.setText(String.valueOf(item.getQuantity()));
-                tvName.setText(item.getProductName());
-                
-                double unitPrice = item.getUnitPrice();
-                double itemTotal = item.getTotalPrice();
-                if (unitPrice <= 0 && itemTotal > 0 && item.getQuantity() > 0) {
-                    unitPrice = itemTotal / item.getQuantity();
-                }
-                
-                tvPrice.setText(formatter.format(unitPrice));
-                tvSubtotal.setText(formatter.format(itemTotal));
-
-                itemsContainer.addView(itemView);
-            }
-        }
-
-        AlertDialog dialog = builder.setView(dialogView).create();
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        }
-        
-        btnClose.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-    }
-
-    private String mapOrderStatusToString(OrderStatus status) {
-        if (status == null) return "N/A";
-        switch (status) {
-            case PENDING: return "CHỜ THANH TOÁN";
-            case PREPARING: return "ĐANG CHẾ BIẾN";
-            case COMPLETED: return "HOÀN THÀNH";
-            case CANCELLED: return "ĐÃ HỦY";
-            default: return status.name();
+        public void getItemOffsets(@NonNull Rect out, @NonNull View v, @NonNull RecyclerView p,
+                @NonNull RecyclerView.State s) {
+            int pos = p.getChildAdapterPosition(v);
+            int col = pos % span;
+            out.left = space - col * space / span;
+            out.right = (col + 1) * space / span;
+            if (pos < span)
+                out.top = space;
+            out.bottom = space;
         }
     }
 }
