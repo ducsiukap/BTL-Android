@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class ChatRequest {
+    @SerializedName("message")
     private String message;
     @SerializedName("session_id")
     private String sessionId;
