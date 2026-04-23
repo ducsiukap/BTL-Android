@@ -30,9 +30,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.ddht.R;
 import com.example.ddht.data.manager.CartManager;
+import com.example.ddht.data.model.CartItem;
 import com.example.ddht.data.model.Product;
 import com.example.ddht.data.remote.dto.ApiResponse;
 import com.example.ddht.data.remote.dto.CatalogDto;
+import com.example.ddht.data.remote.dto.ChatCartItemDto;
 import com.example.ddht.data.remote.dto.ChatMessageDto;
 import com.example.ddht.data.remote.dto.ChatResponse;
 import com.example.ddht.data.remote.dto.OrderResponse;
@@ -286,7 +288,11 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void sendChatMessage(String msg, ChatAdapter adapter, RecyclerView rv) {
-        chatRepository.sendMessage(msg, chatSessionId).enqueue(new Callback<ChatResponse>() {
+        List<ChatCartItemDto> currentCartPayload = shouldIncludeCurrentCart(msg)
+                ? buildCurrentCartPayload()
+                : null;
+
+        chatRepository.sendMessage(msg, chatSessionId, currentCartPayload).enqueue(new Callback<ChatResponse>() {
             @Override
             public void onResponse(Call<ChatResponse> call, Response<ChatResponse> response) {
                 Log.d(TAG, "Chat HTTP Status: " + response.code());
@@ -297,6 +303,15 @@ public class HomeActivity extends AppCompatActivity {
 
                     Log.d(TAG, "Bot Response: " + chatData.getResponse());
                     adapter.addMessage(new ChatMessageDto(chatData.getResponse(), false));
+
+                    if (chatData.getActionData() != null) {
+                        syncCartFromChatAction(chatData.getActionData());
+                        if (!chatData.getActionData().isEmpty()) {
+                            Toast.makeText(HomeActivity.this, "Da cap nhat gio hang tu tro ly ao", Toast.LENGTH_SHORT)
+                                    .show();
+                        }
+                    }
+
                     rv.smoothScrollToPosition(adapter.getItemCount() - 1);
                 } else {
                     Log.e(TAG, "Chat response failed: " + response.message());
@@ -311,6 +326,90 @@ public class HomeActivity extends AppCompatActivity {
                 rv.smoothScrollToPosition(adapter.getItemCount() - 1);
             }
         });
+    }
+
+    private boolean shouldIncludeCurrentCart(String msg) {
+        if (TextUtils.isEmpty(msg)) {
+            return false;
+        }
+
+        String lower = msg.toLowerCase();
+        boolean hasAddKeyword = lower.contains("thêm") || lower.contains("them") || lower.contains("add");
+        boolean hasCartKeyword = lower.contains("giỏ hàng") || lower.contains("gio hang") || lower.contains("cart");
+        return hasAddKeyword && hasCartKeyword;
+    }
+
+    private List<ChatCartItemDto> buildCurrentCartPayload() {
+        List<CartItem> items = CartManager.getInstance().getCartItems();
+        List<ChatCartItemDto> payload = new ArrayList<>();
+
+        for (CartItem item : items) {
+            if (item == null || item.getProduct() == null || item.getProduct().getId() == null) {
+                continue;
+            }
+
+            Product product = item.getProduct();
+            payload.add(new ChatCartItemDto(
+                    "product_" + product.getId(),
+                    product.getName(),
+                    product.getDisplayPrice(),
+                    item.getQuantity(),
+                    product.getImageUrl()));
+        }
+
+        return payload;
+    }
+
+    private void syncCartFromChatAction(List<ChatCartItemDto> actionItems) {
+        CartManager cartManager = CartManager.getInstance();
+        cartManager.clearCart();
+
+        for (ChatCartItemDto actionItem : actionItems) {
+            if (actionItem == null || TextUtils.isEmpty(actionItem.getName()) || actionItem.getQuantity() <= 0) {
+                continue;
+            }
+
+            Long mappedProductId = mapActionItemIdToProductId(actionItem.getItemId());
+            if (mappedProductId == null) {
+                continue;
+            }
+
+            Product product = new Product(
+                    mappedProductId,
+                    actionItem.getName(),
+                    "",
+                    actionItem.getPrice(),
+                    actionItem.getPrice(),
+                    false,
+                    actionItem.getUrl());
+            cartManager.addProduct(product, actionItem.getQuantity());
+        }
+    }
+
+    private Long mapActionItemIdToProductId(String itemId) {
+        if (TextUtils.isEmpty(itemId)) {
+            return null;
+        }
+
+        int numberStart = -1;
+        for (int i = itemId.length() - 1; i >= 0; i--) {
+            if (Character.isDigit(itemId.charAt(i))) {
+                numberStart = i;
+            } else if (numberStart != -1) {
+                break;
+            }
+        }
+
+        if (numberStart != -1) {
+            String numericTail = itemId.substring(numberStart);
+            try {
+                return Long.parseLong(numericTail);
+            } catch (NumberFormatException ignored) {
+                // Fallback to hash-based id below.
+            }
+        }
+
+        return 1_000_000_000L + (long) Math.abs(itemId.hashCode());
     }
 
     private void handleVoiceChatButton(ChatAdapter adapter, RecyclerView rv, ImageButton button) {
