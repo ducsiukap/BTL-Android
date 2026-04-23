@@ -43,7 +43,34 @@ public class ChatRepository {
             throw new IllegalArgumentException("Audio file does not exist");
         }
 
-        RequestBody requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), audioFile);
+        RequestBody requestBody = RequestBody.create(
+                MediaType.parse(resolveAudioMimeType(audioFile.getName())),
+                audioFile);
         return MultipartBody.Part.createFormData("audio", audioFile.getName(), requestBody);
+    }
+
+    private String resolveAudioMimeType(String fileName) {
+        if (fileName == null) {
+            return "application/octet-stream";
+        }
+
+        String lower = fileName.toLowerCase();
+        if (lower.endsWith(".wav")) {
+            return "audio/wav";
+        }
+        if (lower.endsWith(".mp3")) {
+            return "audio/mpeg";
+        }
+        if (lower.endsWith(".ogg")) {
+            return "audio/ogg";
+        }
+        if (lower.endsWith(".flac")) {
+            return "audio/flac";
+        }
+        if (lower.endsWith(".m4a")) {
+            return "audio/mp4";
+        }
+
+        return "application/octet-stream";
     }
 }

@@ -3,6 +3,8 @@ package com.example.ddht.ui.common;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -36,7 +38,7 @@ import com.example.ddht.data.remote.dto.ChatResponse;
 import com.example.ddht.data.remote.dto.OrderResponse;
 import com.example.ddht.data.remote.dto.OrderStatus;
 import com.example.ddht.data.remote.dto.ProductDto;
-import com.example.ddht.data.remote.dto.VoiceChatResponse;
+import com.example.ddht.data.remote.dto.SpeechToTextResponse;
 import com.example.ddht.data.repository.CatalogRepository;
 import com.example.ddht.data.repository.ChatRepository;
 import com.example.ddht.data.repository.OrderRepository;
@@ -51,6 +53,11 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,6 +72,9 @@ import retrofit2.Response;
 public class HomeActivity extends AppCompatActivity {
     private static final String TAG = "HomeActivity";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 1201;
+    private static final int VOICE_SAMPLE_RATE = 16000;
+    private static final int VOICE_CHANNEL_COUNT = 1;
+    private static final int VOICE_BITS_PER_SAMPLE = 16;
     private SessionManager sessionManager;
     private CatalogRepository catalogRepository;
     private ProductRepository productRepository;
@@ -78,10 +88,14 @@ public class HomeActivity extends AppCompatActivity {
     private String currentQuery = "";
     private String chatSessionId = null; // Duy trì session_id từ AI server
     private boolean isVoiceRecording = false;
-    private MediaRecorder voiceRecorder;
+    private AudioRecord voiceRecorder;
+    private Thread voiceRecordThread;
+    private volatile boolean keepVoiceRecording;
+    private int voiceBufferSize;
     private File voiceTempFile;
     private ChatAdapter activeChatAdapter;
     private RecyclerView activeChatRecycler;
+    private EditText activeChatInput;
     private ImageButton activeVoiceButton;
 
     private OrderRepository orderRepository;
@@ -224,6 +238,7 @@ public class HomeActivity extends AppCompatActivity {
         ChatAdapter chatAdapter = new ChatAdapter();
         rvChatHistory.setLayoutManager(new LinearLayoutManager(this));
         rvChatHistory.setAdapter(chatAdapter);
+        activeChatInput = edtChatMessage;
 
         chatAdapter.addMessage(new ChatMessageDto(
                 "Xin chào! Tôi là trợ lý ảo. Bạn hãy chọn gợi ý hoặc nhập nội dung để tôi hỗ trợ nhé!", false));
@@ -256,17 +271,15 @@ public class HomeActivity extends AppCompatActivity {
 
         AlertDialog dialog = new AlertDialog.Builder(this).setView(dialogView).setPositiveButton("Đóng", null).create();
         dialog.setOnDismissListener(d -> {
-            if (isVoiceRecording && voiceRecorder != null) {
-                try {
-                    voiceRecorder.stop();
-                } catch (RuntimeException ignored) {
-                }
+            if (isVoiceRecording) {
+                stopVoiceRecordingInternal();
             }
             resetVoiceRecorder();
             cleanupVoiceTempFile();
             isVoiceRecording = false;
             activeChatAdapter = null;
             activeChatRecycler = null;
+            activeChatInput = null;
             activeVoiceButton = null;
         });
         dialog.show();
@@ -323,22 +336,37 @@ public class HomeActivity extends AppCompatActivity {
 
     private void startVoiceRecording() {
         try {
-            voiceTempFile = File.createTempFile("voice_chat_", ".m4a", getCacheDir());
-            voiceRecorder = new MediaRecorder();
-            voiceRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-            voiceRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-            voiceRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-            voiceRecorder.setAudioSamplingRate(16000);
-            voiceRecorder.setAudioEncodingBitRate(64000);
-            voiceRecorder.setOutputFile(voiceTempFile.getAbsolutePath());
-            voiceRecorder.prepare();
-            voiceRecorder.start();
+            voiceTempFile = File.createTempFile("voice_chat_", ".wav", getCacheDir());
+            voiceBufferSize = AudioRecord.getMinBufferSize(
+                    VOICE_SAMPLE_RATE,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT);
+            if (voiceBufferSize <= 0) {
+                throw new IllegalStateException("Invalid audio buffer size: " + voiceBufferSize);
+            }
+
+            voiceBufferSize = Math.max(voiceBufferSize, VOICE_SAMPLE_RATE);
+            voiceRecorder = new AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    VOICE_SAMPLE_RATE,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    voiceBufferSize);
+
+            if (voiceRecorder.getState() != AudioRecord.STATE_INITIALIZED) {
+                throw new IllegalStateException("AudioRecord initialization failed");
+            }
+
+            keepVoiceRecording = true;
+            voiceRecorder.startRecording();
+            voiceRecordThread = new Thread(this::recordPcmToWavFile, "voice-wav-recorder");
+            voiceRecordThread.start();
 
             isVoiceRecording = true;
             if (activeVoiceButton != null) {
                 activeVoiceButton.setColorFilter(getColor(android.R.color.holo_red_dark));
             }
-            Toast.makeText(this, "Đang ghi âm... Bấm lại để gửi", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Đang ghi âm WAV... Bấm lại để gửi", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Log.e(TAG, "Failed to start voice recording", e);
             resetVoiceRecorder();
@@ -349,21 +377,14 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void stopVoiceRecordingAndSend() {
-        if (voiceRecorder != null) {
-            try {
-                voiceRecorder.stop();
-            } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to stop recording cleanly", e);
-            }
-        }
-
+        stopVoiceRecordingInternal();
         resetVoiceRecorder();
-        isVoiceRecording = false;
+
         if (activeVoiceButton != null) {
             activeVoiceButton.clearColorFilter();
         }
 
-        if (voiceTempFile == null || !voiceTempFile.exists() || voiceTempFile.length() == 0) {
+        if (voiceTempFile == null || !voiceTempFile.exists() || voiceTempFile.length() <= 44) {
             cleanupVoiceTempFile();
             Toast.makeText(this, "Không có dữ liệu ghi âm", Toast.LENGTH_SHORT).show();
             return;
@@ -372,51 +393,47 @@ public class HomeActivity extends AppCompatActivity {
         final File uploadFile = voiceTempFile;
 
         if (activeChatAdapter != null) {
-            activeChatAdapter.addMessage(new ChatMessageDto("Đang xử lý giọng nói...", false));
+            activeChatAdapter.addMessage(new ChatMessageDto("Đang chuyển giọng nói thành văn bản...", false));
             if (activeChatRecycler != null) {
                 activeChatRecycler.smoothScrollToPosition(activeChatAdapter.getItemCount() - 1);
             }
         }
 
-        chatRepository.voiceChat(uploadFile, chatSessionId).enqueue(new Callback<VoiceChatResponse>() {
+        chatRepository.speechToText(uploadFile).enqueue(new Callback<SpeechToTextResponse>() {
             @Override
-            public void onResponse(Call<VoiceChatResponse> call, Response<VoiceChatResponse> response) {
+            public void onResponse(Call<SpeechToTextResponse> call, Response<SpeechToTextResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    VoiceChatResponse voiceData = response.body();
-                    if (!TextUtils.isEmpty(voiceData.getSessionId())) {
-                        chatSessionId = voiceData.getSessionId();
+                    SpeechToTextResponse speechData = response.body();
+                    String transcript = !TextUtils.isEmpty(speechData.getCorrectedText())
+                            ? speechData.getCorrectedText()
+                            : speechData.getOriginalText();
+
+                    if (!TextUtils.isEmpty(transcript) && activeChatInput != null) {
+                        activeChatInput.setText(transcript);
+                        activeChatInput.setSelection(transcript.length());
                     }
-
-                    String transcript = !TextUtils.isEmpty(voiceData.getCorrectedText())
-                            ? voiceData.getCorrectedText()
-                            : voiceData.getOriginalText();
-
-                    if (!TextUtils.isEmpty(transcript) && activeChatAdapter != null) {
-                        activeChatAdapter.addMessage(new ChatMessageDto(transcript, true));
-                    }
-
-                    String botReply = TextUtils.isEmpty(voiceData.getResponse())
-                            ? "Mình chưa xử lý được yêu cầu thoại, bạn thử lại nhé."
-                            : voiceData.getResponse();
 
                     if (activeChatAdapter != null) {
-                        activeChatAdapter.addMessage(new ChatMessageDto(botReply, false));
+                        String previewMessage = TextUtils.isEmpty(transcript)
+                                ? "Không nhận được nội dung từ giọng nói."
+                                : "Đã nhận diện: " + transcript;
+                        activeChatAdapter.addMessage(new ChatMessageDto(previewMessage, false));
                         if (activeChatRecycler != null) {
                             activeChatRecycler.smoothScrollToPosition(activeChatAdapter.getItemCount() - 1);
                         }
                     }
                 } else if (activeChatAdapter != null) {
-                    activeChatAdapter.addMessage(new ChatMessageDto("Không thể xử lý giọng nói lúc này.", false));
+                    activeChatAdapter.addMessage(new ChatMessageDto("Không thể nhận diện giọng nói lúc này.", false));
                 }
 
                 cleanupVoiceTempFile();
             }
 
             @Override
-            public void onFailure(Call<VoiceChatResponse> call, Throwable t) {
-                Log.e(TAG, "Voice chat failed", t);
+            public void onFailure(Call<SpeechToTextResponse> call, Throwable t) {
+                Log.e(TAG, "Speech-to-text failed", t);
                 if (activeChatAdapter != null) {
-                    activeChatAdapter.addMessage(new ChatMessageDto("Lỗi kết nối voice chat.", false));
+                    activeChatAdapter.addMessage(new ChatMessageDto("Lỗi kết nối speech-to-text.", false));
                     if (activeChatRecycler != null) {
                         activeChatRecycler.smoothScrollToPosition(activeChatAdapter.getItemCount() - 1);
                     }
@@ -426,11 +443,95 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
+    private void recordPcmToWavFile() {
+        if (voiceTempFile == null || voiceRecorder == null) {
+            return;
+        }
+
+        long totalPcmBytes = 0;
+        byte[] buffer = new byte[voiceBufferSize];
+
+        try (FileOutputStream outputStream = new FileOutputStream(voiceTempFile)) {
+            // Reserve 44-byte WAV header and patch it after recording stops.
+            outputStream.write(new byte[44]);
+
+            while (keepVoiceRecording) {
+                int read = voiceRecorder.read(buffer, 0, buffer.length);
+                if (read > 0) {
+                    outputStream.write(buffer, 0, read);
+                    totalPcmBytes += read;
+                }
+            }
+
+            outputStream.flush();
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to write WAV recording", e);
+            return;
+        }
+
+        try {
+            writeWavHeader(voiceTempFile, totalPcmBytes);
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to finalize WAV header", e);
+        }
+    }
+
+    private void writeWavHeader(File wavFile, long totalPcmBytes) throws IOException {
+        long totalDataLen = totalPcmBytes + 36;
+        long byteRate = (long) VOICE_SAMPLE_RATE * VOICE_CHANNEL_COUNT * VOICE_BITS_PER_SAMPLE / 8;
+        short blockAlign = (short) (VOICE_CHANNEL_COUNT * VOICE_BITS_PER_SAMPLE / 8);
+
+        ByteBuffer header = ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN);
+        header.put(new byte[] { 'R', 'I', 'F', 'F' });
+        header.putInt((int) totalDataLen);
+        header.put(new byte[] { 'W', 'A', 'V', 'E' });
+        header.put(new byte[] { 'f', 'm', 't', ' ' });
+        header.putInt(16); // PCM chunk size
+        header.putShort((short) 1); // PCM format
+        header.putShort((short) VOICE_CHANNEL_COUNT);
+        header.putInt(VOICE_SAMPLE_RATE);
+        header.putInt((int) byteRate);
+        header.putShort(blockAlign);
+        header.putShort((short) VOICE_BITS_PER_SAMPLE);
+        header.put(new byte[] { 'd', 'a', 't', 'a' });
+        header.putInt((int) totalPcmBytes);
+
+        try (RandomAccessFile wavAccess = new RandomAccessFile(wavFile, "rw")) {
+            wavAccess.seek(0);
+            wavAccess.write(header.array(), 0, 44);
+        }
+    }
+
+    private void stopVoiceRecordingInternal() {
+        keepVoiceRecording = false;
+        if (voiceRecorder != null) {
+            try {
+                voiceRecorder.stop();
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Failed to stop recording cleanly", e);
+            }
+        }
+        waitVoiceRecordingThread();
+        isVoiceRecording = false;
+    }
+
+    private void waitVoiceRecordingThread() {
+        if (voiceRecordThread == null) {
+            return;
+        }
+        try {
+            voiceRecordThread.join(1200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            Log.e(TAG, "Interrupted while waiting voice thread", e);
+        }
+        voiceRecordThread = null;
+    }
+
     private void resetVoiceRecorder() {
         if (voiceRecorder == null) {
             return;
         }
-        voiceRecorder.reset();
         voiceRecorder.release();
         voiceRecorder = null;
     }
