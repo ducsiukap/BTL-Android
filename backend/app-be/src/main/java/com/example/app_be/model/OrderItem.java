@@ -29,5 +29,5 @@ public class OrderItem extends LongIdBaseEntity {
     private Integer quantity;
 
     @Column(nullable = false)
-    private BigDecimal price; // Snapshot price at order time
+    private BigDecimal price;
 }
