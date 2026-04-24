@@ -66,6 +66,22 @@ public class StaffOrderAdapter extends RecyclerView.Adapter<StaffOrderAdapter.St
         }
         holder.tvItems.setText(sb.toString().trim());
 
+        if (order.getCreatedAt() != null) {
+            try {
+                // Parse ISO 8601 từ Backend
+                java.text.SimpleDateFormat sdfInput = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US);
+                sdfInput.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                java.util.Date date = sdfInput.parse(order.getCreatedAt());
+
+                java.text.SimpleDateFormat sdfOutput = new java.text.SimpleDateFormat("HH:mm - dd/MM/yyyy", java.util.Locale.getDefault());
+                holder.tvTime.setText(sdfOutput.format(date));
+            } catch (Exception e) {
+                holder.tvTime.setText(order.getCreatedAt());
+            }
+        } else {
+            holder.tvTime.setText("Vừa xong");
+        }
+
         if (order.getStatus() == OrderStatus.PENDING) {
             holder.btnAction.setVisibility(View.VISIBLE);
             holder.btnAction.setText("XÁC NHẬN THANH TOÁN");
