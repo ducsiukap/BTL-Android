@@ -25,7 +25,7 @@ spring:
       ddl-auto: update
 
   flyway:
-    enabled: true
+    enabled: false
     baseline-on-migrate: true
 
 app:

@@ -70,6 +70,19 @@ public class ManagerActivity extends AppCompatActivity {
             if (!isChecked) {
                 return;
             }
+            if (checkedId == R.id.btnCatalogTab) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.layoutManagerCatalogTab, new CatalogFragment())
+                        .commit();
+            } else if (checkedId == R.id.btnProductTab) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.layoutManagerProductTab, new ManagerProductsFragment())
+                        .commit();
+            } else if (checkedId == R.id.btnSaleOffTab) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.layoutManagerSaleOffTab, new SaleOffFragment())
+                        .commit();
+            }
             layoutManagerCatalogTab.setVisibility(checkedId == R.id.btnCatalogTab ? View.VISIBLE : View.GONE);
             layoutManagerProductTab.setVisibility(checkedId == R.id.btnProductTab ? View.VISIBLE : View.GONE);
             layoutManagerSaleOffTab.setVisibility(checkedId == R.id.btnSaleOffTab ? View.VISIBLE : View.GONE);

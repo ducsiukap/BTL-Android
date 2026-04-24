@@ -9,6 +9,8 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+import java.util.concurrent.TimeUnit;
+
 public final class NetworkClient {
     private static Retrofit retrofit;
 
@@ -22,6 +24,10 @@ public final class NetworkClient {
 
             OkHttpClient okHttpClient = new OkHttpClient.Builder()
                     .addInterceptor(loggingInterceptor)
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(180, TimeUnit.SECONDS)
+                    .writeTimeout(180, TimeUnit.SECONDS)
+                    .callTimeout(240, TimeUnit.SECONDS)
                     .build();
 
             Gson gson = new GsonBuilder().create();
