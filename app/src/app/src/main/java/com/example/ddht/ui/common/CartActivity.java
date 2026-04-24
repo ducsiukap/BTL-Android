@@ -10,6 +10,7 @@ import android.widget.ImageButton;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -79,7 +80,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
         adapter = new CartAdapter(this);
         rvItems.setAdapter(adapter);
 
-        btnPlaceOrder.setOnClickListener(v -> placeOrder());
+        btnPlaceOrder.setOnClickListener(v -> showConfirmOrderDialog());
 
         updateUi();
     }
@@ -91,6 +92,48 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
 
         NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
         tvTotalPrice.setText(formatter.format(CartManager.getInstance().getTotalPrice()));
+    }
+
+    private void showConfirmOrderDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.layout_dialog_order_detail, null);
+
+        TextView tvTitle = dialogView.findViewById(R.id.tvDialogOrderTitle);
+        TextView tvCode = dialogView.findViewById(R.id.tvDialogOrderCode);
+        TextView tvStatus = dialogView.findViewById(R.id.tvDialogOrderStatus);
+        TextView tvTotal = dialogView.findViewById(R.id.tvDialogOrderTotal);
+        LinearLayout itemsContainer = dialogView.findViewById(R.id.layoutDialogOrderItems);
+        Button btnConfirm = dialogView.findViewById(R.id.btnDialogOrderClose);
+
+        tvTitle.setText("Xác nhận đơn hàng");
+        tvCode.setText("Vui lòng kiểm tra lại các món đã chọn");
+        tvStatus.setVisibility(View.GONE);
+
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        double total = CartManager.getInstance().getTotalPrice();
+        tvTotal.setText(formatter.format(total));
+
+        List<CartItem> cartItems = CartManager.getInstance().getCartItems();
+        for (CartItem item : cartItems) {
+            View itemView = getLayoutInflater().inflate(R.layout.item_dialog_order_detail, itemsContainer, false);
+            ((TextView) itemView.findViewById(R.id.tvOrderItemQty)).setText(String.valueOf(item.getQuantity()));
+            ((TextView) itemView.findViewById(R.id.tvOrderItemName)).setText(item.getProduct().getName());
+            ((TextView) itemView.findViewById(R.id.tvOrderItemPrice)).setText(formatter.format(item.getProduct().getDisplayPrice()));
+            ((TextView) itemView.findViewById(R.id.tvOrderItemSubtotal)).setText(formatter.format(item.getProduct().getDisplayPrice() * item.getQuantity()));
+            itemsContainer.addView(itemView);
+        }
+
+        btnConfirm.setText("XÁC NHẬN ĐẶT HÀNG");
+        AlertDialog dialog = builder.setView(dialogView).create();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnConfirm.setOnClickListener(v -> {
+            dialog.dismiss();
+            placeOrder();
+        });
+        dialog.show();
     }
 
     private void placeOrder() {
