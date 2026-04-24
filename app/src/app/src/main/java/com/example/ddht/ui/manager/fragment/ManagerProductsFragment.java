@@ -545,7 +545,15 @@ public class ManagerProductsFragment extends Fragment {
                     public void onResponse(@NonNull Call<ApiResponse<ProductDto>> call,
                                            @NonNull Response<ApiResponse<ProductDto>> response) {
                         if (response.isSuccessful()) {
-                            loadProducts(currentQuery);
+                            ProductDto updated = response.body() == null ? null : response.body().getData();
+                            if (updated != null) {
+                                if (updated.getSelling() == null || !Boolean.valueOf(isSelling).equals(updated.getSelling())) {
+                                    updated.setSelling(isSelling);
+                                }
+                                adapter.replaceProduct(updated);
+                            } else {
+                                adapter.updateSellingState(product.getId(), isSelling);
+                            }
                         } else {
                             showError(getString(R.string.manager_product_update_failed));
                             loadProducts(currentQuery);

@@ -14,6 +14,7 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.inputmethod.EditorInfo;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -29,6 +30,8 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.example.ddht.data.remote.SimpleStompClient;
 
 import com.example.ddht.R;
@@ -118,6 +121,7 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
         setContentView(R.layout.activity_home);
 
         sessionManager = new SessionManager(this);
@@ -182,13 +186,34 @@ public class HomeActivity extends AppCompatActivity {
             rvStaffOrders.setAdapter(staffOrderAdapter);
         }
 
-        btnSearchProducts.setOnClickListener(v -> searchProducts());
+        btnSearchProducts.setOnClickListener(v -> {
+            searchProducts();
+            KeyboardUtils.hideKeyboard(this, edtProductSearch);
+            edtProductSearch.clearFocus();
+            if (bottomNavigationView.getSelectedItemId() == R.id.nav_products) {
+                fabChatBot.show();
+            }
+        });
         edtProductSearch.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
                 searchProducts();
+                KeyboardUtils.hideKeyboard(this, edtProductSearch);
+                edtProductSearch.clearFocus();
+                if (bottomNavigationView.getSelectedItemId() == R.id.nav_products) {
+                    fabChatBot.show();
+                }
                 return true;
             }
             return false;
+        });
+        edtProductSearch.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                fabChatBot.hide();
+            } else {
+                if (bottomNavigationView.getSelectedItemId() == R.id.nav_products) {
+                    fabChatBot.show();
+                }
+            }
         });
 
         if (sessionManager.isLoggedIn()) {
@@ -248,6 +273,13 @@ public class HomeActivity extends AppCompatActivity {
         if (isStaff) {
             initStaffWebSocket();
         }
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNavigationView, (v, insets) -> {
+            int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+            int systemBottom = insets.getInsets(WindowInsetsCompat.Type.systemBars()).bottom;
+            int shiftUp = Math.max(0, imeBottom - systemBottom);
+            v.setTranslationY(-shiftUp);
+            return insets;
+        });
     }
 
     private void initStaffWebSocket() {
@@ -808,8 +840,12 @@ public class HomeActivity extends AppCompatActivity {
                             return;
                         }
                         List<Product> mapped = new ArrayList<>();
-                        for (ProductDto dto : response.body().getData())
+                        for (ProductDto dto : response.body().getData()) {
+                            if (dto == null || !Boolean.TRUE.equals(dto.getSelling())) {
+                                continue;
+                            }
                             mapped.add(mapDtoToProduct(dto));
+                        }
                         productAdapter.submit(mapped);
                         if (mapped.isEmpty()) {
                             tvProductsError.setText(R.string.home_products_empty);

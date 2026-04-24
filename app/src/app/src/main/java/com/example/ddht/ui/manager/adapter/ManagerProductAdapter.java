@@ -41,6 +41,34 @@ public class ManagerProductAdapter extends RecyclerView.Adapter<ManagerProductAd
         notifyDataSetChanged();
     }
 
+    public void replaceProduct(ProductDto updatedProduct) {
+        if (updatedProduct == null || updatedProduct.getId() == null) {
+            return;
+        }
+        for (int i = 0; i < products.size(); i++) {
+            ProductDto current = products.get(i);
+            if (current != null && updatedProduct.getId().equals(current.getId())) {
+                products.set(i, updatedProduct);
+                notifyItemChanged(i);
+                return;
+            }
+        }
+    }
+
+    public void updateSellingState(Long productId, boolean isSelling) {
+        if (productId == null) {
+            return;
+        }
+        for (int i = 0; i < products.size(); i++) {
+            ProductDto current = products.get(i);
+            if (current != null && productId.equals(current.getId())) {
+                current.setSelling(isSelling);
+                notifyItemChanged(i);
+                return;
+            }
+        }
+    }
+
     @NonNull
     @Override
     public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -78,7 +106,7 @@ public class ManagerProductAdapter extends RecyclerView.Adapter<ManagerProductAd
         }
 
         holder.switchSelling.setOnCheckedChangeListener(null);
-        boolean isSelling = product.getSelling() == null || product.getSelling();
+        boolean isSelling = Boolean.TRUE.equals(product.getSelling());
         holder.tvStatus.setText(isSelling
                 ? R.string.manager_product_status_selling
                 : R.string.manager_product_status_stopped);

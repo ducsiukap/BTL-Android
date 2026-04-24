@@ -222,7 +222,7 @@ public class ProductDetailActivity extends AppCompatActivity {
         }
 
         bindingSwitch = true;
-        boolean isSelling = product.getSelling() == null || product.getSelling();
+        boolean isSelling = Boolean.TRUE.equals(product.getSelling());
         switchSelling.setChecked(isSelling);
         bindingSwitch = false;
 

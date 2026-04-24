@@ -5,7 +5,7 @@ public final class Constants {
     }
 
     // Android emulator can access host machine via 10.0.2.2.
-    public static final String BASE_URL = "http://10.0.2.2:3333/api/v1/";
+    public static final String BASE_URL = "http://192.168.0.102:3333/api/v1/";
     public static final String AI_BASE_URL = "http://10.0.2.2:8000/api/";
     public static final String PREFS_NAME = "ddht_session";
     public static final String KEY_ACCESS_TOKEN = "access_token";

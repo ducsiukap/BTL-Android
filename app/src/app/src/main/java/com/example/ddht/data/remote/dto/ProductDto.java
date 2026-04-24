@@ -13,13 +13,13 @@ public class ProductDto {
     @SerializedName("description")
     private String description;
 
-    @SerializedName("selling")
+    @SerializedName(value = "selling", alternate = {"isSelling"})
     private Boolean isSelling;
 
     @SerializedName("originalPrice")
     private Double originalPrice;
 
-    @SerializedName("saleOff")
+    @SerializedName(value = "saleOff", alternate = {"isSaleOff"})
     private Boolean isSaleOff;
 
     @SerializedName("discountedPrice")
@@ -42,6 +42,10 @@ public class ProductDto {
 
     public Boolean getSelling() {
         return isSelling;
+    }
+
+    public void setSelling(Boolean selling) {
+        isSelling = selling;
     }
 
     public Double getOriginalPrice() {

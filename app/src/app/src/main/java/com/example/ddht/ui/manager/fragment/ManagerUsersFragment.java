@@ -29,6 +29,8 @@ import com.example.ddht.data.repository.AuthRepository;
 import com.example.ddht.ui.common.KeyboardUtils;
 import com.example.ddht.ui.manager.adapter.ManagerUserAdapter;
 import com.example.ddht.utils.SessionManager;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import java.util.List;
 
@@ -205,12 +207,13 @@ public class ManagerUsersFragment extends Fragment {
             public void onResponse(@NonNull Call<ApiResponse<UserDto>> call,
                                    @NonNull Response<ApiResponse<UserDto>> response) {
                 setLoading(false);
-                if (response.isSuccessful()) {
+                ApiResponse<UserDto> body = response.body();
+                if (response.isSuccessful() && body != null && body.isSuccess() && body.getData() != null) {
                     dialog.dismiss();
                     Toast.makeText(requireContext(), R.string.manager_users_create_success, Toast.LENGTH_SHORT).show();
                     loadUsers(edtSearch.getText().toString().trim());
                 } else {
-                    showError(getString(R.string.manager_users_create_failed));
+                    showError(extractErrorMessage(response, getString(R.string.manager_users_create_failed)));
                 }
             }
 
@@ -220,6 +223,34 @@ public class ManagerUsersFragment extends Fragment {
                 showError(getString(R.string.network_error, throwable.getMessage()));
             }
         });
+    }
+
+    private String extractErrorMessage(Response<?> response, String fallback) {
+        if (response == null) {
+            return fallback;
+        }
+        if (response.body() instanceof ApiResponse<?>) {
+            ApiResponse<?> body = (ApiResponse<?>) response.body();
+            if (body != null && !TextUtils.isEmpty(body.getMessage())) {
+                return body.getMessage();
+            }
+        }
+        try {
+            if (response.errorBody() != null) {
+                String raw = response.errorBody().string();
+                if (!TextUtils.isEmpty(raw)) {
+                    JsonObject obj = new Gson().fromJson(raw, JsonObject.class);
+                    if (obj != null && obj.has("message") && !obj.get("message").isJsonNull()) {
+                        String message = obj.get("message").getAsString();
+                        if (!TextUtils.isEmpty(message)) {
+                            return message;
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return fallback;
     }
 
     private void updateUser(String userId, String fullName, String email, AlertDialog dialog) {

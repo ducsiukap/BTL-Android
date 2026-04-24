@@ -76,12 +76,12 @@ Backend mặc định chạy ở cổng `3333`.
 
 ### 3.2. Khởi tạo tài khoản "**MANAGER**" (**`Nếu chạy lần đầu`**)
 
-Tạo tài khoản MANAGER:
+Tạo tài khoản MANAGER (`cmd`):
 
-```bash
-curl -X POST "http://localhost:3333/api/v1/users/no-auth" \
-    -H "Content-Type: application/json" \
-    -d '{"fullName":"Admin","email":"admin@ishop.local","role":"MANAGER"}'
+```cmd
+curl -X POST "http://localhost:3333/api/v1/users/no-auth" ^
+-H "Content-Type: application/json" ^
+-d "{\"fullName\":\"Admin\",\"email\":\"manager@ishop.com\",\"role\":\"MANAGER\"}"
 ```
 
 Mật khẩu ban đầu là `DEFAULT_PASSWORD` (mặc định: `12345678`, có thể cấu hình trong env).
