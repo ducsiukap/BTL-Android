@@ -153,7 +153,7 @@ public class CartActivity extends AppCompatActivity implements CartAdapter.OnCar
 
     private void initWebSocket(String orderCode) {
         String wsUrl = "ws://10.0.2.2:3333/ws-order";
-        stompClient = new com.example.ddht.data.remote.SimpleStompClient(wsUrl);
+        stompClient = new SimpleStompClient(wsUrl);
         stompClient.connect();
         stompClient.subscribe("/topic/order/" + orderCode, payload -> {
             if (successDialog != null && successDialog.isShowing()) {

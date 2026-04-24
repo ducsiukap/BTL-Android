@@ -21,6 +21,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.ddht.data.remote.SimpleStompClient;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import android.widget.CheckBox;
 
@@ -125,7 +127,7 @@ public class HomeActivity extends AppCompatActivity {
         // Staff Orders RecyclerView
         RecyclerView rvStaffOrders = findViewById(R.id.rvStaffOrders);
         if (rvStaffOrders != null) {
-            rvStaffOrders.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+            rvStaffOrders.setLayoutManager(new LinearLayoutManager(this));
             staffOrderAdapter = new StaffOrderAdapter(new StaffOrderAdapter.OnOrderActionListener() {
                 @Override
                 public void onUpdateStatus(OrderResponse order, OrderStatus nextStatus) {
@@ -223,7 +225,6 @@ public class HomeActivity extends AppCompatActivity {
             btnOrderFilter.setOnClickListener(v -> showFilterBottomSheet());
         }
 
-        // Bắt đầu lắng nghe WebSocket nếu là nhân viên
         if (isStaff) {
             initStaffWebSocket();
         }
@@ -231,11 +232,10 @@ public class HomeActivity extends AppCompatActivity {
 
     private void initStaffWebSocket() {
         String wsUrl = "ws://10.0.2.2:3333/ws-order";
-        stompClient = new com.example.ddht.data.remote.SimpleStompClient(wsUrl);
+        stompClient = new SimpleStompClient(wsUrl);
         stompClient.connect();
         stompClient.subscribe("/topic/staff/new-order", payload -> {
             Toast.makeText(HomeActivity.this, "CÓ ĐƠN HÀNG MỚI!", Toast.LENGTH_LONG).show();
-            // Nếu đang ở màn hình đơn hàng thì reload ngay
             loadStaffOrders();
         });
     }
