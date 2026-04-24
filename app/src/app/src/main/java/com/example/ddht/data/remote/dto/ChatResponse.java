@@ -1,27 +1,50 @@
 package com.example.ddht.data.remote.dto;
 
+import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 public class ChatResponse {
+    @SerializedName("response")
     private String response;
-    private List<Action> actions;
-    private List<ProductDto> products; // Danh sách sản phẩm Bot tìm được
 
-    public static class Action {
-        private String type; // "ADD_TO_CART", "SEARCH", "CLEAR_FILTER", "SHOW_DETAILS"
-        private Long productId;
-        private Integer quantity;
-        private String searchQuery;
-        private Long catalogId;
+    @SerializedName("session_id")
+    private String sessionId;
 
-        public String getType() { return type; }
-        public Long getProductId() { return productId; }
-        public Integer getQuantity() { return quantity; }
-        public String getSearchQuery() { return searchQuery; }
-        public Long getCatalogId() { return catalogId; }
+    @SerializedName("action")
+    private String action;
+
+    @SerializedName(value = "action_data", alternate = { "action_item" })
+    private List<ChatCartItemDto> actionData;
+
+    public String getResponse() {
+        return response;
     }
 
-    public String getResponse() { return response; }
-    public List<Action> getActions() { return actions; }
-    public List<ProductDto> getProducts() { return products; }
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public List<ChatCartItemDto> getActionData() {
+        return actionData;
+    }
+
+    public void setResponse(String response) {
+        this.response = response;
+    }
+
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    public void setActionData(List<ChatCartItemDto> actionData) {
+        this.actionData = actionData;
+    }
 }

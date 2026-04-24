@@ -7,25 +7,31 @@ from langchain_core.language_models import BaseChatModel
 from langgraph.prebuilt import create_react_agent
 
 from src.agents.state import AgentState
-from src.tools.promotion_tools import get_active_promotions, check_promotion_for_dish, check_coupon
+from src.tools import promo_tools
 
 logger = logging.getLogger(__name__)
 
-PROMOTION_AGENT_PROMPT = """Bạn là trợ lý chuyên về khuyến mãi và ưu đãi nhà hàng. Nhiệm vụ của bạn là giúp khách hàng:
+PROMOTION_AGENT_PROMPT = """You are the promotions and discounts specialist assistant. Your responsibilities are to help users:
 
-- Xem các chương trình khuyến mãi đang có
-- Kiểm tra khuyến mãi áp dụng cho món ăn cụ thể
-- Xác minh mã giảm giá (coupon)
-- Tư vấn cách tiết kiệm khi đặt hàng
+- View active promotions
+- Check promotions for specific dishes
+- Suggest ways to save money when ordering
+- Suggest best currently active deals
 
-Sử dụng các tools có sẵn để tra cứu thông tin khuyến mãi. Luôn trả lời bằng tiếng Việt, nhiệt tình và chi tiết.
-Hãy chủ động gợi ý combo hoặc ưu đãi phù hợp cho khách.
+Use available tools to retrieve promotion information.
+Respond in Vietnamese, with a warm and clear tone.
+Only provide deals tied to currently selling dishes.
 """
 
 
 def create_promotion_agent(llm: BaseChatModel):
     """Create the promotion agent using ReAct pattern."""
-    tools = [get_active_promotions, check_promotion_for_dish, check_coupon]
+    tools = [
+        promo_tools.get_active_promotions,
+        promo_tools.check_promotion_for_dish,
+        promo_tools.get_best_deals,
+    ]
+    logger.info("FLOW promotion_agent.init tool_count=%s", len(tools))
     agent = create_react_agent(llm, tools, prompt=PROMOTION_AGENT_PROMPT)
     return agent
 
@@ -45,6 +51,7 @@ def create_promotion_agent_node(llm: BaseChatModel):
             return {
                 "messages": [AIMessage(content=last_message.content, name="promotion_agent")],
                 "next_agent": "FINISH",
+                "last_topic": "promotion",
             }
         except Exception:
             logger.error("FLOW promotion_agent.failed session_id=%s", session_id, exc_info=True)
@@ -56,6 +63,7 @@ def create_promotion_agent_node(llm: BaseChatModel):
                     )
                 ],
                 "next_agent": "FINISH",
+                "last_topic": "promotion",
             }
 
     return promotion_agent_node

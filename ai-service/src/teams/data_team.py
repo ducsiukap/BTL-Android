@@ -1,0 +1,37 @@
+"""Data team router for information lookup workflows."""
+
+from langchain_core.language_models import BaseChatModel
+
+from src.teams.team_router import create_team_router_node
+
+DATA_TEAM_SYSTEM_PROMPT = """You are the lead router for the data_team in a food-ordering assistant.
+
+Your tasks:
+1. Analyze the user's information request.
+2. Select the best data agent to fetch the needed information.
+
+Available data agents:
+- **menu_agent**: menu categories, dishes, prices, descriptions, ingredients, AND verifying dish availability before ordering.
+- **promotion_agent**: promotions, discounts, dish-specific deals
+
+Routing rules:
+1. If the user asks to add a NEW item to the cart, route to menu_agent to verify the item exists and is available.
+2. Questions about food items, prices, menu, categories, ingredients -> menu_agent
+3. Questions about promotions, discounts, special deals -> promotion_agent
+4. Mixed questions about both dish info and discount/promotion for that dish -> promotion_agent
+5. If you can answer directly in a short generic way (for example: thanks, simple acknowledgment) -> FINISH
+
+You MUST respond in strict JSON format:
+{"next": "<menu_agent|promotion_agent|FINISH>", "response": "<content if FINISH, otherwise empty>"}
+"""
+
+
+def create_data_team_node(llm: BaseChatModel):
+    """Create the data team router node."""
+    return create_team_router_node(
+        llm=llm,
+        system_prompt=DATA_TEAM_SYSTEM_PROMPT,
+        valid_targets={"menu_agent", "promotion_agent", "FINISH"},
+        flow_name="data_team",
+        fallback_message="Sorry, I cannot route this data query right now. Please try again shortly.",
+    )
