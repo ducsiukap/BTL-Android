@@ -2,12 +2,14 @@ package com.example.ddht.data.repository;
 
 import com.example.ddht.data.remote.AiNetworkClient;
 import com.example.ddht.data.remote.api.ChatApi;
+import com.example.ddht.data.remote.dto.ChatCartItemDto;
 import com.example.ddht.data.remote.dto.ChatRequest;
 import com.example.ddht.data.remote.dto.ChatResponse;
 import com.example.ddht.data.remote.dto.SpeechToTextResponse;
 import com.example.ddht.data.remote.dto.VoiceChatResponse;
 
 import java.io.File;
+import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -28,6 +30,10 @@ public class ChatRepository {
 
     public Call<ChatResponse> sendMessage(String message, String sessionId) {
         return chatApi.sendMessage(new ChatRequest(message, sessionId));
+    }
+
+    public Call<ChatResponse> sendMessage(String message, String sessionId, List<ChatCartItemDto> currentCart) {
+        return chatApi.sendMessage(new ChatRequest(message, sessionId, currentCart));
     }
 
     public Call<SpeechToTextResponse> speechToText(File audioFile) {

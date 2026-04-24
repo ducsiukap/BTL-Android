@@ -25,10 +25,10 @@ public final class AiNetworkClient {
             OkHttpClient okHttpClient = new OkHttpClient.Builder()
                     .addInterceptor(loggingInterceptor)
                     // AI requests can take tens of seconds due to multi-agent/tool steps.
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(120, TimeUnit.SECONDS)
-                    .callTimeout(150, TimeUnit.SECONDS)
+                    .connectTimeout(60, TimeUnit.SECONDS)
+                    .writeTimeout(60, TimeUnit.SECONDS)
+                    .readTimeout(300, TimeUnit.SECONDS)
+                    .callTimeout(360, TimeUnit.SECONDS)
                     .build();
 
             Gson gson = new GsonBuilder().create();
